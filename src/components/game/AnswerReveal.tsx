@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Player, PlayerAnswer, Question } from '@/lib/types';
 
@@ -23,7 +23,8 @@ export default function AnswerReveal({
   isLastQuestion,
   onNextQuestion,
 }: AnswerRevealProps) {
-  // Map player answers with their display names
+  const [countdown, setCountdown] = useState(6);
+
   const playerAnswers = answers.map((ans) => {
     const player = players.find((p) => p.id === ans.playerId);
     return {
@@ -33,97 +34,104 @@ export default function AnswerReveal({
     };
   });
 
-  // Auto advance after 6 seconds if host
   useEffect(() => {
-    if (!isHost) return;
+    const interval = setInterval(() => {
+      setCountdown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+
     const timer = setTimeout(() => {
-      onNextQuestion();
+      if (isHost) {
+        onNextQuestion();
+      }
     }, 6000);
-    return () => clearTimeout(timer);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timer);
+    };
   }, [isHost, onNextQuestion]);
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.4 }}
-      className={`w-full max-w-xl glass-panel border shadow-2xl backdrop-blur-xl p-6 md:p-8 text-center ${
-        matched
-          ? 'border-amber-400/50 bg-gradient-to-b from-purple-950/90 to-amber-950/40 glow-border-gold'
-          : 'border-purple-500/30 bg-purple-950/85'
+      initial={{ opacity: 0, scale: 0.92, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.92, y: -20 }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      className={`w-full max-w-xl p-7 md:p-10 glow-card relative overflow-hidden ${
+        matched ? 'glow-card-gold' : ''
       }`}
     >
-      {/* Match Result Banner */}
+      {/* Result Badge */}
       <motion.div
-        initial={{ y: -15, opacity: 0 }}
+        initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.1 }}
+        transition={{ delay: 0.15 }}
         className="mb-4"
       >
         {matched ? (
-          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-amber-500/30 to-orange-500/30 border border-amber-400 text-amber-200 font-extrabold text-lg md:text-xl shadow-lg glow-text-gold">
-            <span>🪔</span>
-            <span>IT&apos;S A MATCH!</span>
-            <span>✨</span>
+          <div className="inline-flex items-center gap-2.5 px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-500/30 via-orange-500/30 to-amber-500/30 border border-amber-400 text-[#FFE082] font-black text-xl md:text-2xl shadow-[0_0_30px_rgba(255,183,77,0.4)] tracking-wide">
+            <span className="text-2xl animate-bounce">🪔</span>
+            <span className="font-display">IT&apos;S A MATCH!</span>
+            <span className="text-2xl">✨</span>
           </div>
         ) : (
-          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-purple-500/20 border border-purple-400/40 text-purple-200 font-bold text-base md:text-lg">
+          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-purple-900/40 border border-purple-400/40 text-purple-200 font-bold text-base md:text-lg">
             <span>💫</span>
-            <span>DIFFERENT MINDS, SAME HEARTS</span>
+            <span>DIFFERENT PERSPECTIVES, SAME LOVE</span>
             <span>💖</span>
           </div>
         )}
       </motion.div>
 
-      {/* Subtitle */}
-      <p className="text-sm md:text-base text-amber-100/90 mb-6 font-medium">
+      {/* Romantic Commentary */}
+      <p className="text-sm md:text-base text-amber-100 font-medium mb-6">
         {matched
-          ? 'Your minds are in sync! A warm Diwali lantern is ascending into the night sky! 🎆'
-          : 'Opposites attract! No lantern lit this round, but the night is young! 🌟'}
+          ? 'Your connection shines bright! A warm Diwali lantern is ascending into the sky above! 🎆'
+          : 'Opposites make every moment exciting! Onward to the next spark! 🌟'}
       </p>
 
-      {/* Original Question */}
-      <div className="p-3 mb-6 rounded-xl bg-black/30 border border-purple-500/20 text-xs md:text-sm text-purple-200/80">
+      {/* Question Recall */}
+      <div className="p-3.5 mb-6 rounded-xl bg-black/40 border border-purple-500/25 text-xs md:text-sm text-purple-200/90 font-display italic">
         “{question.text}”
       </div>
 
-      {/* Answers Comparison */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      {/* Side-by-Side Answers */}
+      <div className="grid grid-cols-2 gap-4 mb-7">
         {playerAnswers.map((pa, idx) => (
           <motion.div
             key={idx}
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 + idx * 0.15 }}
-            className={`p-4 rounded-2xl border ${
+            className={`p-4 md:p-5 rounded-2xl border text-center ${
               matched
-                ? 'bg-amber-500/15 border-amber-400/40'
-                : 'bg-purple-900/30 border-purple-500/20'
+                ? 'bg-amber-500/15 border-amber-400/50 shadow-[0_0_20px_rgba(255,183,77,0.15)]'
+                : 'bg-purple-950/50 border-purple-500/30'
             }`}
           >
-            <p className="text-xs text-amber-300/80 uppercase font-semibold mb-1">
+            <p className="text-xs text-[#FFE082] uppercase font-bold tracking-wider mb-1.5">
               {pa.playerName} {pa.isHost ? '👑' : '💖'}
             </p>
-            <p className="text-xl md:text-2xl font-extrabold text-amber-100 break-words">
+            <p className="text-xl md:text-3xl font-extrabold font-display text-[#FFF9C4] break-words">
               {pa.answer}
             </p>
           </motion.div>
         ))}
       </div>
 
-      {/* Next Question Control */}
+      {/* Host Controls & Countdown */}
       {isHost ? (
         <button
           onClick={onNextQuestion}
-          className="w-full btn-gold text-lg py-3.5 flex items-center justify-center gap-2 cursor-pointer shadow-xl"
+          className="w-full btn-royal-gold py-4 px-6 text-lg flex items-center justify-center gap-2 cursor-pointer"
         >
-          <span>{isLastQuestion ? 'View Final Diwali Skyline 🎆' : 'Next Question ➔'}</span>
+          <span>{isLastQuestion ? 'View Illuminated Skyline 🎆' : 'Next Question'}</span>
+          <span className="text-sm font-normal opacity-80">({countdown}s) ➔</span>
         </button>
       ) : (
-        <p className="text-xs text-amber-200/70 italic">
-          Host will advance to next question in a few seconds...
-        </p>
+        <div className="p-3 rounded-xl bg-purple-900/30 border border-purple-500/20 text-xs text-amber-200/80">
+          Host will advance to next question in {countdown}s... ✨
+        </div>
       )}
     </motion.div>
   );

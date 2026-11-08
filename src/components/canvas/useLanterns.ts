@@ -33,6 +33,43 @@ interface LanternParticle {
 
 export function useLanterns() {
   const lanternsRef = useRef<Lantern[]>([]);
+  const ambientInitialized = useRef(false);
+
+  /**
+   * Pre-seed a few gentle floating lanterns in the sky for instant festive atmosphere
+   */
+  const initAmbientLanterns = useCallback((width: number, height: number) => {
+    if (ambientInitialized.current) return;
+    ambientInitialized.current = true;
+
+    const skylineBase = height * 0.72;
+    const initialLanterns: Lantern[] = [];
+
+    for (let i = 0; i < 7; i++) {
+      const targetX = Math.random() * width * 0.85 + width * 0.075;
+      const targetY = Math.random() * skylineBase * 0.65 + skylineBase * 0.08;
+
+      initialLanterns.push({
+        id: -100 - i,
+        x: targetX,
+        y: targetY,
+        targetX,
+        targetY,
+        size: 16 + Math.random() * 10,
+        color: LANTERN_COLORS[i % LANTERN_COLORS.length],
+        opacity: 0.75 + Math.random() * 0.25,
+        phase: 'floating',
+        swayOffset: Math.random() * Math.PI * 2,
+        swaySpeed: 0.6 + Math.random() * 1.0,
+        riseSpeed: 1.0,
+        glowIntensity: 0.75 + Math.random() * 0.25,
+        particles: [],
+        settled: true,
+      });
+    }
+
+    lanternsRef.current = initialLanterns;
+  }, []);
 
   /**
    * Add a new lantern that launches from the bottom and rises up into the night skyline
@@ -41,9 +78,8 @@ export function useLanterns() {
     (canvasWidth: number, canvasHeight: number, questionIndex: number) => {
       const skylineBase = canvasHeight * 0.72;
 
-      // Target position in the upper sky above the city
-      const targetX = Math.random() * canvasWidth * 0.85 + canvasWidth * 0.075;
-      const targetY = Math.random() * skylineBase * 0.65 + skylineBase * 0.05;
+      const targetX = Math.random() * canvasWidth * 0.82 + canvasWidth * 0.09;
+      const targetY = Math.random() * skylineBase * 0.6 + skylineBase * 0.05;
 
       const lantern: Lantern = {
         id: questionIndex,
@@ -51,14 +87,14 @@ export function useLanterns() {
         y: canvasHeight + 40,
         targetX,
         targetY,
-        size: 20 + Math.random() * 12,
+        size: 22 + Math.random() * 12,
         color: LANTERN_COLORS[questionIndex % LANTERN_COLORS.length],
         opacity: 0,
         phase: 'rising',
         swayOffset: Math.random() * Math.PI * 2,
         swaySpeed: 0.8 + Math.random() * 1.4,
-        riseSpeed: 1.4 + Math.random() * 0.8,
-        glowIntensity: 0.8 + Math.random() * 0.3,
+        riseSpeed: 1.5 + Math.random() * 0.8,
+        glowIntensity: 0.9 + Math.random() * 0.25,
         particles: [],
         settled: false,
       };
@@ -68,9 +104,6 @@ export function useLanterns() {
     []
   );
 
-  /**
-   * Update all lantern physics and spark trails
-   */
   const updateLanterns = useCallback((deltaTime: number) => {
     const dt = Math.min(deltaTime, 0.05);
 
@@ -84,7 +117,7 @@ export function useLanterns() {
         const dy = updated.targetY - updated.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
-        if (dist < 4) {
+        if (dist < 5) {
           updated.phase = 'floating';
           updated.x = updated.targetX;
           updated.y = updated.targetY;
@@ -94,7 +127,6 @@ export function useLanterns() {
           updated.y += (dy / dist) * speed;
         }
 
-        // Generate glowing amber spark trail below rising lantern
         if (Math.random() < 0.45) {
           updated.particles.push({
             x: updated.x + (Math.random() - 0.5) * updated.size * 0.4,
@@ -110,7 +142,6 @@ export function useLanterns() {
         updated.settled = true;
       }
 
-      // Update particle decay
       updated.particles = updated.particles
         .map((p) => ({
           ...p,
@@ -125,16 +156,13 @@ export function useLanterns() {
     });
   }, []);
 
-  /**
-   * Render all lanterns with realistic light scattering and warm glowing core
-   */
   const drawLanterns = useCallback(
     (ctx: CanvasRenderingContext2D, time: number) => {
       for (const lantern of lanternsRef.current) {
         if (lantern.opacity <= 0) continue;
 
-        const sway = Math.sin(time * lantern.swaySpeed + lantern.swayOffset) * 5;
-        const bob = Math.sin(time * 1.1 + lantern.swayOffset) * 2.5;
+        const sway = Math.sin(time * lantern.swaySpeed + lantern.swayOffset) * 6;
+        const bob = Math.sin(time * 1.1 + lantern.swayOffset) * 3;
         const drawX = lantern.x + sway;
         const drawY = lantern.y + bob;
 
@@ -144,38 +172,38 @@ export function useLanterns() {
         // Wide outer ambient glow
         const outerGlow = ctx.createRadialGradient(
           drawX, drawY, 0,
-          drawX, drawY, lantern.size * 4.5
+          drawX, drawY, lantern.size * 4.8
         );
-        outerGlow.addColorStop(0, `${lantern.color}45`);
-        outerGlow.addColorStop(0.45, `${lantern.color}15`);
+        outerGlow.addColorStop(0, `${lantern.color}50`);
+        outerGlow.addColorStop(0.45, `${lantern.color}18`);
         outerGlow.addColorStop(1, `${lantern.color}00`);
 
         ctx.beginPath();
         ctx.fillStyle = outerGlow;
-        ctx.arc(drawX, drawY, lantern.size * 4.5, 0, Math.PI * 2);
+        ctx.arc(drawX, drawY, lantern.size * 4.8, 0, Math.PI * 2);
         ctx.fill();
 
         // Intense inner halo
         const midGlow = ctx.createRadialGradient(
           drawX, drawY, 0,
-          drawX, drawY, lantern.size * 2.2
+          drawX, drawY, lantern.size * 2.3
         );
-        midGlow.addColorStop(0, `${lantern.color}90`);
-        midGlow.addColorStop(0.65, `${lantern.color}35`);
+        midGlow.addColorStop(0, `${lantern.color}95`);
+        midGlow.addColorStop(0.65, `${lantern.color}40`);
         midGlow.addColorStop(1, `${lantern.color}00`);
 
         ctx.beginPath();
         ctx.fillStyle = midGlow;
-        ctx.arc(drawX, drawY, lantern.size * 2.2, 0, Math.PI * 2);
+        ctx.arc(drawX, drawY, lantern.size * 2.3, 0, Math.PI * 2);
         ctx.fill();
 
-        // Traditional paper lantern silhouette (elongated rounded cylinder)
+        // Paper lantern gradient
         const bodyGradient = ctx.createRadialGradient(
           drawX, drawY - lantern.size * 0.15, lantern.size * 0.2,
           drawX, drawY, lantern.size
         );
-        bodyGradient.addColorStop(0, '#FFFDF0');
-        bodyGradient.addColorStop(0.25, '#FFE27A');
+        bodyGradient.addColorStop(0, '#FFFDF5');
+        bodyGradient.addColorStop(0.25, '#FFE58A');
         bodyGradient.addColorStop(0.6, lantern.color);
         bodyGradient.addColorStop(1, adjustColor(lantern.color, -50));
 
@@ -184,14 +212,14 @@ export function useLanterns() {
         ctx.beginPath();
         ctx.ellipse(
           drawX, drawY,
-          lantern.size * 0.7, lantern.size,
+          lantern.size * 0.72, lantern.size,
           0, 0, Math.PI * 2
         );
         ctx.fill();
 
         // Bamboo / wire ribs structure
-        ctx.strokeStyle = `${adjustColor(lantern.color, -65)}88`;
-        ctx.lineWidth = 0.6;
+        ctx.strokeStyle = `${adjustColor(lantern.color, -70)}99`;
+        ctx.lineWidth = 0.7;
         ctx.beginPath();
         ctx.moveTo(drawX, drawY - lantern.size);
         ctx.lineTo(drawX, drawY + lantern.size);
@@ -200,13 +228,13 @@ export function useLanterns() {
         ctx.beginPath();
         ctx.ellipse(
           drawX, drawY,
-          lantern.size * 0.7, lantern.size * 0.25,
+          lantern.size * 0.72, lantern.size * 0.28,
           0, 0, Math.PI * 2
         );
         ctx.stroke();
 
         // Top collar
-        ctx.fillStyle = adjustColor(lantern.color, -45);
+        ctx.fillStyle = adjustColor(lantern.color, -50);
         ctx.beginPath();
         ctx.ellipse(
           drawX, drawY - lantern.size,
@@ -215,8 +243,8 @@ export function useLanterns() {
         );
         ctx.fill();
 
-        // Bottom combustion chamber / ring
-        ctx.fillStyle = adjustColor(lantern.color, -35);
+        // Bottom combustion chamber
+        ctx.fillStyle = adjustColor(lantern.color, -40);
         ctx.beginPath();
         ctx.ellipse(
           drawX, drawY + lantern.size,
@@ -230,22 +258,22 @@ export function useLanterns() {
                          Math.sin(time * 15 + lantern.swayOffset * 2) * 0.05;
         const flameCore = ctx.createRadialGradient(
           drawX, drawY + lantern.size * 0.2, 0,
-          drawX, drawY + lantern.size * 0.2, lantern.size * 0.55
+          drawX, drawY + lantern.size * 0.2, lantern.size * 0.58
         );
-        flameCore.addColorStop(0, `rgba(255, 255, 230, ${0.85 * flicker})`);
-        flameCore.addColorStop(0.4, `rgba(255, 200, 80, ${0.5 * flicker})`);
+        flameCore.addColorStop(0, `rgba(255, 255, 240, ${0.9 * flicker})`);
+        flameCore.addColorStop(0.4, `rgba(255, 205, 90, ${0.55 * flicker})`);
         flameCore.addColorStop(1, 'rgba(255, 120, 30, 0)');
 
         ctx.beginPath();
         ctx.fillStyle = flameCore;
-        ctx.arc(drawX, drawY + lantern.size * 0.2, lantern.size * 0.55, 0, Math.PI * 2);
+        ctx.arc(drawX, drawY + lantern.size * 0.2, lantern.size * 0.58, 0, Math.PI * 2);
         ctx.fill();
 
         // Spark particles trailing downwards
         for (const p of lantern.particles) {
           const pAlpha = (p.life / p.maxLife) * lantern.opacity;
           ctx.beginPath();
-          ctx.fillStyle = `rgba(255, 215, 100, ${pAlpha})`;
+          ctx.fillStyle = `rgba(255, 220, 110, ${pAlpha})`;
           ctx.arc(p.x, p.y, p.size * (p.life / p.maxLife), 0, Math.PI * 2);
           ctx.fill();
         }
@@ -257,10 +285,10 @@ export function useLanterns() {
   );
 
   const getLanternCount = useCallback(() => {
-    return lanternsRef.current.length;
+    return lanternsRef.current.filter((l) => l.id >= 0).length;
   }, []);
 
-  return { addLantern, updateLanterns, drawLanterns, getLanternCount, lanternsRef };
+  return { addLantern, initAmbientLanterns, updateLanterns, drawLanterns, getLanternCount, lanternsRef };
 }
 
 function adjustColor(hex: string, amount: number): string {

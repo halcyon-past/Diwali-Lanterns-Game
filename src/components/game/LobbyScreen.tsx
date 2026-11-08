@@ -27,7 +27,6 @@ export default function LobbyScreen({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -49,43 +48,43 @@ export default function LobbyScreen({
   return (
     <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-8 text-center">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md glass-panel border border-amber-500/25 shadow-2xl backdrop-blur-xl bg-purple-950/70"
+        initial={{ opacity: 0, scale: 0.94, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="w-full max-w-md p-7 md:p-9 glow-card relative overflow-hidden"
       >
-        <div className="flex items-center justify-between pb-4 border-b border-purple-500/20">
-          <span className="text-xs uppercase tracking-wider text-amber-300 font-semibold">
-            Game Lobby
+        <div className="flex items-center justify-between pb-4 border-b border-purple-500/25">
+          <span className="text-xs uppercase tracking-wider text-[#FFE082] font-bold">
+            ✦ Sacred Room Lobby
           </span>
           <button
             onClick={onLeaveRoom}
-            className="text-xs text-purple-300 hover:text-red-300 transition"
+            className="text-xs text-purple-300 hover:text-red-300 transition cursor-pointer"
           >
-            Leave Room
+            Leave
           </button>
         </div>
 
-        {/* Room Code Card */}
-        <div className="my-6 p-4 rounded-xl bg-black/40 border border-amber-500/30">
-          <p className="text-xs text-amber-200/70 uppercase tracking-wider font-medium">
-            Share this Room Code with your Partner
+        {/* Room Code Showcase */}
+        <div className="my-6 p-5 rounded-2xl bg-black/40 border border-amber-400/30 text-center shadow-inner">
+          <p className="text-xs text-amber-200/70 uppercase tracking-widest font-semibold">
+            Invite Your Partner With This Code
           </p>
-          <div className="mt-2 flex items-center justify-center gap-3">
-            <span className="text-4xl font-mono font-black tracking-widest text-amber-300 glow-text-gold">
+          <div className="mt-2.5 flex items-center justify-center">
+            <span className="text-5xl font-mono font-black tracking-widest text-[#FFE082] glow-text-gold">
               {roomCode}
             </span>
           </div>
 
-          <div className="mt-3 flex justify-center gap-2">
+          <div className="mt-4 flex justify-center gap-2">
             <button
               onClick={handleCopyCode}
-              className="px-3 py-1.5 text-xs rounded-lg bg-amber-500/20 text-amber-200 border border-amber-500/40 hover:bg-amber-500/30 transition flex items-center gap-1.5"
+              className="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-amber-500/20 text-[#FFE082] border border-amber-400/40 hover:bg-amber-500/30 transition cursor-pointer flex items-center gap-1.5"
             >
-              <span>{copied ? '✓ Copied Code!' : '📋 Copy Code'}</span>
+              <span>{copied ? '✓ Copied!' : '📋 Copy Code'}</span>
             </button>
             <button
               onClick={handleCopyLink}
-              className="px-3 py-1.5 text-xs rounded-lg bg-purple-500/20 text-purple-200 border border-purple-500/40 hover:bg-purple-500/30 transition flex items-center gap-1.5"
+              className="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-purple-500/20 text-purple-200 border border-purple-400/40 hover:bg-purple-500/30 transition cursor-pointer flex items-center gap-1.5"
             >
               <span>🔗 Copy Link</span>
             </button>
@@ -94,45 +93,45 @@ export default function LobbyScreen({
 
         {/* Players List */}
         <div className="space-y-3 mb-6 text-left">
-          <p className="text-xs text-amber-200/70 uppercase tracking-wider font-semibold">
-            Couple Connection ({players.length}/2)
+          <p className="text-xs text-amber-200/70 uppercase tracking-wider font-bold">
+            Connected Couple ({players.length}/2)
           </p>
 
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {players.map((player) => (
               <div
                 key={player.id}
-                className="flex items-center justify-between p-3 rounded-xl bg-purple-900/30 border border-purple-500/30"
+                className="flex items-center justify-between p-3.5 rounded-xl bg-purple-900/40 border border-amber-500/25 shadow-sm"
               >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-xl">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl filter drop-shadow">
                     {player.isHost ? '👑' : '💖'}
                   </span>
                   <div>
-                    <p className="font-semibold text-amber-100 text-sm">
+                    <p className="font-bold text-[#FFF9C4] text-sm">
                       {player.name}
                     </p>
-                    <p className="text-[11px] text-purple-300/70">
+                    <p className="text-[11px] text-purple-200/70">
                       {player.isHost ? 'Host' : 'Partner'}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-xs text-emerald-300 font-medium">
-                    Ready
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(74,222,128,0.9)] animate-pulse" />
+                  <span className="text-xs text-emerald-300 font-bold">
+                    Connected
                   </span>
                 </div>
               </div>
             ))}
 
             {!partnerJoined && (
-              <div className="flex items-center justify-between p-3 rounded-xl bg-black/20 border border-dashed border-amber-500/30">
-                <div className="flex items-center gap-2.5 text-amber-200/50">
-                  <span className="text-xl animate-pulse">🕯️</span>
-                  <p className="text-sm italic">Waiting for your partner to join...</p>
+              <div className="flex items-center justify-between p-3.5 rounded-xl bg-black/30 border border-dashed border-amber-400/40">
+                <div className="flex items-center gap-3 text-amber-200/70">
+                  <span className="text-2xl animate-pulse">🕯️</span>
+                  <p className="text-xs md:text-sm italic">Waiting for your partner to enter the room...</p>
                 </div>
-                <div className="w-4 h-4 border-2 border-amber-400/40 border-t-amber-400 rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
               </div>
             )}
           </div>
@@ -143,20 +142,20 @@ export default function LobbyScreen({
           isHost ? (
             <button
               onClick={onProceedToSettings}
-              className="w-full btn-gold text-base py-3 flex items-center justify-center gap-2 cursor-pointer transition hover:scale-[1.02]"
+              className="w-full btn-royal-gold py-4 px-6 text-lg flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>⚙️ Game Settings & Questions</span>
+              <span>⚙️ Game Settings &amp; Questions</span>
               <span>➔</span>
             </button>
           ) : (
-            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-sm flex items-center justify-center gap-2">
-              <span className="animate-spin">✨</span>
-              <span>Partner connected! Host is setting up the game...</span>
+            <div className="p-3.5 rounded-xl bg-amber-500/15 border border-amber-400/30 text-amber-200 text-sm flex items-center justify-center gap-2 font-medium">
+              <span className="animate-spin text-lg">✨</span>
+              <span>Both connected! Host is configuring questions...</span>
             </div>
           )
         ) : (
-          <p className="text-xs text-purple-200/60 italic">
-            Send the code to your partner so they can join on their phone or laptop!
+          <p className="text-xs text-purple-200/70 italic">
+            Share the code with your partner so they can join on their device!
           </p>
         )}
       </motion.div>

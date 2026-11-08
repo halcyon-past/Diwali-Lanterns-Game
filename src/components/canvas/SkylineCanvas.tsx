@@ -27,46 +27,43 @@ const SkylineCanvas = forwardRef<SkylineCanvasHandle, SkylineCanvasProps>(
     const lastTimeRef = useRef<number>(0);
     const startTimeRef = useRef<number>(0);
 
-    const { initStars, drawStars } = useStars(550);
-    const { addLantern, updateLanterns, drawLanterns } = useLanterns();
-    const { spawnParticles, updateParticles, drawParticles, spawnBurst } = useParticles(150);
+    const { initStars, drawStars } = useStars(600);
+    const { addLantern, initAmbientLanterns, updateLanterns, drawLanterns } = useLanterns();
+    const { spawnParticles, updateParticles, drawParticles, spawnBurst } = useParticles(160);
 
     const drawSky = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number) => {
-      // Midnight Diwali gradient
+      // Cosmic Diwali midnight gradient
       const skyGradient = ctx.createLinearGradient(0, 0, 0, height);
-      skyGradient.addColorStop(0, '#0a0015');
-      skyGradient.addColorStop(0.2, '#120025');
-      skyGradient.addColorStop(0.45, '#0e183a');
-      skyGradient.addColorStop(0.72, '#0c1445');
-      skyGradient.addColorStop(0.88, '#16103c');
-      skyGradient.addColorStop(1, '#0a0a14');
+      skyGradient.addColorStop(0, '#04010b');
+      skyGradient.addColorStop(0.2, '#0c021f');
+      skyGradient.addColorStop(0.45, '#0a1033');
+      skyGradient.addColorStop(0.7, '#0f0e38');
+      skyGradient.addColorStop(0.88, '#1b0e35');
+      skyGradient.addColorStop(1, '#090514');
 
       ctx.fillStyle = skyGradient;
       ctx.fillRect(0, 0, width, height);
 
-      // Deep purple ethereal cosmos glow
+      // Ethereal royal purple nebula
       const nebula1 = ctx.createRadialGradient(
-        width * 0.75, height * 0.22, 0,
-        width * 0.75, height * 0.22, width * 0.45
+        width * 0.72, height * 0.25, 0,
+        width * 0.72, height * 0.25, width * 0.5
       );
-      nebula1.addColorStop(0, 'rgba(90, 25, 120, 0.18)');
-      nebula1.addColorStop(0.5, 'rgba(50, 15, 80, 0.08)');
+      nebula1.addColorStop(0, 'rgba(120, 30, 150, 0.22)');
+      nebula1.addColorStop(0.5, 'rgba(60, 15, 90, 0.09)');
       nebula1.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
       ctx.fillStyle = nebula1;
       ctx.fillRect(0, 0, width, height);
 
-      // Soft blue night haze
-      const nebula2 = ctx.createRadialGradient(
-        width * 0.2, height * 0.38, 0,
-        width * 0.2, height * 0.38, width * 0.35
-      );
-      nebula2.addColorStop(0, 'rgba(25, 55, 110, 0.14)');
-      nebula2.addColorStop(0.6, 'rgba(12, 25, 60, 0.05)');
-      nebula2.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      // Golden horizon ambient haze from millions of Diwali celebrations
+      const goldenHaze = ctx.createLinearGradient(0, height * 0.55, 0, height);
+      goldenHaze.addColorStop(0, 'rgba(255, 140, 20, 0)');
+      goldenHaze.addColorStop(0.7, 'rgba(255, 120, 20, 0.08)');
+      goldenHaze.addColorStop(1, 'rgba(255, 160, 40, 0.18)');
 
-      ctx.fillStyle = nebula2;
-      ctx.fillRect(0, 0, width, height);
+      ctx.fillStyle = goldenHaze;
+      ctx.fillRect(0, height * 0.55, width, height * 0.45);
     }, []);
 
     const render = useCallback(
@@ -86,11 +83,10 @@ const SkylineCanvas = forwardRef<SkylineCanvasHandle, SkylineCanvasProps>(
 
         const width = canvas.width;
         const height = canvas.height;
-        const skylineBase = height * 0.26;
+        const skylineBase = height * 0.24;
 
         ctx.clearRect(0, 0, width, height);
 
-        // Render layers from background to foreground
         drawSky(ctx, width, height);
         drawStars(ctx, time);
         drawLanterns(ctx, time);
@@ -98,27 +94,24 @@ const SkylineCanvas = forwardRef<SkylineCanvasHandle, SkylineCanvasProps>(
         drawSkyline(ctx, { width, height, baseY: skylineBase });
         drawGround(ctx, width, height, skylineBase);
 
-        // Update physics
         updateLanterns(deltaTime);
         updateParticles(deltaTime);
 
-        // Subtle ambient sparkles
-        if (Math.random() < 0.12) {
+        if (Math.random() < 0.15) {
           spawnParticles(width, height, 1);
         }
 
-        // Live lantern counter badge on canvas
         if (showLanternCount && totalQuestions > 0) {
           ctx.save();
-          ctx.fillStyle = 'rgba(255, 215, 80, 0.95)';
-          ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+          ctx.fillStyle = 'rgba(255, 220, 100, 0.95)';
+          ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, "Outfit", sans-serif';
           ctx.textAlign = 'right';
-          ctx.shadowColor = 'rgba(255, 140, 0, 0.8)';
-          ctx.shadowBlur = 8;
+          ctx.shadowColor = 'rgba(255, 150, 0, 0.9)';
+          ctx.shadowBlur = 10;
           ctx.fillText(
-            `🪔 ${lanternCount} / ${totalQuestions} Lanterns Lit`,
-            width - 20,
-            32
+            `🪔 ${lanternCount} / ${totalQuestions} Lanterns Ascending`,
+            width - 24,
+            36
           );
           ctx.restore();
         }
@@ -136,10 +129,12 @@ const SkylineCanvas = forwardRef<SkylineCanvasHandle, SkylineCanvasProps>(
       if (!canvas) return;
 
       const resize = () => {
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width;
-        canvas.height = rect.height;
-        initStars(rect.width, rect.height);
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        canvas.width = w;
+        canvas.height = h;
+        initStars(w, h);
+        initAmbientLanterns(w, h);
       };
 
       resize();
@@ -150,7 +145,7 @@ const SkylineCanvas = forwardRef<SkylineCanvasHandle, SkylineCanvasProps>(
         window.removeEventListener('resize', resize);
         cancelAnimationFrame(animationRef.current);
       };
-    }, [initStars, render]);
+    }, [initStars, initAmbientLanterns, render]);
 
     useImperativeHandle(ref, () => ({
       addLantern: (questionIndex: number) => {
@@ -176,8 +171,16 @@ const SkylineCanvas = forwardRef<SkylineCanvasHandle, SkylineCanvasProps>(
     return (
       <canvas
         ref={canvasRef}
-        className={`w-full h-full ${className}`}
-        style={{ display: 'block' }}
+        className={`fixed inset-0 w-full h-full pointer-events-none ${className}`}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          zIndex: 0,
+          display: 'block',
+        }}
       />
     );
   }

@@ -27,12 +27,11 @@ export default function ResultsScreen({
 
   const percentage = Math.round((totalLanterns / Math.max(1, totalQuestions)) * 100);
 
-  // Romantic title based on match percentage
   const getCoupleTitle = () => {
-    if (percentage >= 80) return { title: 'Eternal Flame Soulmates 🪔✨', desc: 'Your minds and hearts beat in complete harmony! The Diwali sky is blazing with your love.' };
-    if (percentage >= 60) return { title: 'Cosmic Stargazers 🌟', desc: 'Incredible connection! You know each other intimately and celebrate each other’s quirks.' };
-    if (percentage >= 40) return { title: 'Sparkler Sweethearts 🎆', desc: 'Beautiful chemistry! You bring warmth, laughter, and spontaneous joy into each other’s lives.' };
-    return { title: 'Playful Companions 💕', desc: 'Opposites attract! A relationship filled with endless surprises and sweet new discoveries.' };
+    if (percentage >= 80) return { title: 'Eternal Flame Soulmates 🪔✨', desc: 'Your minds and hearts beat in complete harmony! Your shared skyline blazes with luminous love.' };
+    if (percentage >= 60) return { title: 'Cosmic Stargazers 🌟', desc: 'Incredible romantic chemistry! You know each other intimately and celebrate each other’s unique magic.' };
+    if (percentage >= 40) return { title: 'Sparkler Sweethearts 🎆', desc: 'Dynamic & passionate! You bring endless laughter, warmth, and spontaneous joy into each other’s lives.' };
+    return { title: 'Playful Companions 💕', desc: 'Opposites attract! A relationship full of fun surprises, cute banter, and discoveries every day.' };
   };
 
   const titleInfo = getCoupleTitle();
@@ -52,11 +51,11 @@ export default function ResultsScreen({
       const blob = await exportCanvasAsGif(
         canvas,
         {
-          width: 640,
-          height: 480,
+          width: 800,
+          height: 600,
           quality: 10,
           frameDelay: 100,
-          totalFrames: 30, // 3 seconds loop
+          totalFrames: 35,
         },
         (progress) => {
           setExportProgress(Math.round(progress * 100));
@@ -67,8 +66,6 @@ export default function ResultsScreen({
       setExportedSuccess(true);
     } catch (err) {
       console.error('GIF export error:', err);
-      // Fallback to PNG
-      alert('GIF generation took too long; downloading high-res PNG instead!');
       downloadCanvasAsPng(canvas, `diwali-skyline-${player1Name}-${player2Name}.png`);
     } finally {
       setIsExportingGif(false);
@@ -86,57 +83,57 @@ export default function ResultsScreen({
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="w-full max-w-lg glass-panel border border-amber-500/40 shadow-2xl backdrop-blur-xl bg-purple-950/85 p-6 md:p-8 pointer-events-auto glow-border-gold"
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-lg p-7 md:p-10 glow-card glow-card-gold pointer-events-auto relative overflow-hidden"
       >
         <div className="mb-2">
-          <span className="text-5xl diya-glow">🪔</span>
+          <span className="text-5xl md:text-6xl diya-flame inline-block">🪔</span>
         </div>
 
-        <h1 className="text-3xl md:text-4xl font-black bg-gradient-to-r from-amber-200 via-orange-400 to-amber-200 bg-clip-text text-transparent glow-text">
+        <h1 className="text-3xl md:text-4xl font-bold font-display glow-title">
           {titleInfo.title}
         </h1>
 
-        <p className="mt-2 text-xs md:text-sm text-amber-200/80 max-w-sm mx-auto">
+        <p className="mt-2.5 text-xs md:text-sm text-[#FFE082]/90 max-w-sm mx-auto leading-relaxed">
           {titleInfo.desc}
         </p>
 
-        {/* Score Card */}
-        <div className="my-6 p-4 rounded-2xl bg-black/40 border border-amber-500/30 flex items-center justify-around">
+        {/* Scorecard Showcase */}
+        <div className="my-6 p-5 rounded-2xl bg-black/50 border border-amber-400/30 flex items-center justify-around shadow-inner">
           <div>
-            <p className="text-3xl md:text-4xl font-extrabold text-amber-300 glow-text-gold">
+            <p className="text-4xl md:text-5xl font-black font-display text-[#FFE082] glow-text-gold">
               {totalLanterns}
             </p>
-            <p className="text-[11px] text-amber-200/70 uppercase tracking-wider font-semibold">
+            <p className="text-[11px] text-amber-200/70 uppercase tracking-widest font-bold mt-1">
               Lanterns Floating
             </p>
           </div>
 
-          <div className="w-[1px] h-10 bg-purple-500/30" />
+          <div className="w-[1px] h-12 bg-amber-400/20" />
 
           <div>
-            <p className="text-3xl md:text-4xl font-extrabold text-orange-400">
+            <p className="text-4xl md:text-5xl font-black font-display text-orange-400">
               {percentage}%
             </p>
-            <p className="text-[11px] text-amber-200/70 uppercase tracking-wider font-semibold">
-              Couples Sync
+            <p className="text-[11px] text-amber-200/70 uppercase tracking-widest font-bold mt-1">
+              Couple Sync
             </p>
           </div>
 
-          <div className="w-[1px] h-10 bg-purple-500/30" />
+          <div className="w-[1px] h-12 bg-amber-400/20" />
 
           <div>
-            <p className="text-3xl md:text-4xl font-extrabold text-amber-200">
+            <p className="text-4xl md:text-5xl font-black font-display text-amber-200">
               {totalQuestions}
             </p>
-            <p className="text-[11px] text-amber-200/70 uppercase tracking-wider font-semibold">
-              Total Questions
+            <p className="text-[11px] text-amber-200/70 uppercase tracking-widest font-bold mt-1">
+              Questions
             </p>
           </div>
         </div>
 
         <p className="text-xs text-purple-200/80 mb-6">
-          Look at your personalized Diwali night sky behind this card! Each lantern floating in the cosmos represents a matched bond between {player1Name} &amp; {player2Name}.
+          Look at your personalized Diwali sky! Each lantern in the cosmos represents a matched bond between <span className="font-bold text-[#FFE082]">{player1Name}</span> &amp; <span className="font-bold text-[#FFE082]">{player2Name}</span>.
         </p>
 
         {/* Download Actions */}
@@ -144,37 +141,37 @@ export default function ResultsScreen({
           <button
             onClick={handleDownloadGif}
             disabled={isExportingGif}
-            className="w-full btn-gold text-base py-3.5 flex items-center justify-center gap-2 cursor-pointer shadow-xl transition hover:scale-[1.02]"
+            className="w-full btn-royal-gold py-4 px-6 text-base md:text-lg flex items-center justify-center gap-2 cursor-pointer"
           >
             {isExportingGif ? (
               <span className="flex items-center gap-2">
-                <span className="animate-spin">✨</span>
-                <span>Generating Animated GIF ({exportProgress}%)...</span>
+                <span className="animate-spin text-xl">✨</span>
+                <span>Recording Skyline GIF ({exportProgress}%)...</span>
               </span>
             ) : (
               <>
-                <span>🎁 Download Skyline as Animated GIF</span>
+                <span>🎁 Download Animated Skyline GIF</span>
               </>
             )}
           </button>
 
           <button
             onClick={handleDownloadPng}
-            className="w-full btn-secondary text-sm py-2.5 flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full btn-royal-amethyst py-3 px-6 text-sm flex items-center justify-center gap-2 cursor-pointer"
           >
-            <span>📸 Download High-Res Image (PNG)</span>
+            <span>📸 Download High-Res Screenshot (PNG)</span>
           </button>
 
           {exportedSuccess && (
-            <p className="text-xs text-emerald-300 font-medium">
-              ✓ Download started! Share your glowing Diwali skyline on Instagram/WhatsApp! 🪔
+            <p className="text-xs text-emerald-300 font-bold">
+              ✓ Download initiated! Share your glowing Diwali skyline on Instagram/WhatsApp! 🪔
             </p>
           )}
 
           <div className="pt-4 border-t border-purple-500/20">
             <button
               onClick={onPlayAgain}
-              className="text-sm font-semibold text-amber-300 hover:text-amber-100 transition cursor-pointer"
+              className="text-xs md:text-sm font-semibold text-[#FFE082] hover:text-white transition cursor-pointer"
             >
               🔄 Play Another Round with New Questions
             </button>

@@ -3,17 +3,38 @@
 import PusherClient, { Options } from 'pusher-js';
 
 let pusherInstance: PusherClient | null = null;
+let cachedConfig: { key: string; cluster: string } | null = null;
+
+export async function fetchPusherConfig(): Promise<{ key: string; cluster: string }> {
+  if (cachedConfig) return cachedConfig;
+
+  try {
+    const res = await fetch('/api/pusher/config');
+    if (res.ok) {
+      cachedConfig = await res.json();
+      return cachedConfig!;
+    }
+  } catch (err) {
+    console.warn('Failed to fetch pusher config from API:', err);
+  }
+
+  // Fallback default
+  cachedConfig = {
+    key: process.env.NEXT_PUBLIC_PUSHER_KEY || 'f2019c5df4e54eb98dcb',
+    cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'ap2',
+  };
+  return cachedConfig;
+}
 
 export function getPusherClient(authParams?: Record<string, string>): PusherClient {
   if (pusherInstance && authParams) {
-    // If instance exists but new auth params provided, update or disconnect
     pusherInstance.disconnect();
     pusherInstance = null;
   }
 
   if (!pusherInstance) {
-    const key = process.env.NEXT_PUBLIC_PUSHER_KEY || 'dummy_key';
-    const cluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'mt1';
+    const key = cachedConfig?.key || process.env.NEXT_PUBLIC_PUSHER_KEY || 'f2019c5df4e54eb98dcb';
+    const cluster = cachedConfig?.cluster || process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'ap2';
 
     const options: Options = {
       cluster,

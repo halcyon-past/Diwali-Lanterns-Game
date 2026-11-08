@@ -189,25 +189,14 @@ export default function Page() {
         />
       </div>
 
-      {/* Mode Switcher Banner (Top Bar) */}
-      <div className="absolute top-3 left-4 z-20 flex items-center gap-2">
-        <div className="px-3 py-1 rounded-full bg-black/50 border border-amber-500/30 backdrop-blur-md text-xs text-amber-200 flex items-center gap-1.5 shadow-lg">
-          <span className="diya-glow">🪔</span>
-          <span className="font-semibold tracking-wide">Diwali Lanterns</span>
+      {/* Top Header Badge */}
+      <div className="absolute top-4 left-6 z-20 flex items-center gap-2">
+        <div className="px-4 py-1.5 rounded-full bg-black/45 border border-amber-400/35 backdrop-blur-md text-xs text-[#FFE082] flex items-center gap-2 shadow-lg">
+          <span className="diya-flame">🪔</span>
+          <span className="font-semibold tracking-widest uppercase font-display text-[11px]">Happy Diwali ✨</span>
         </div>
       </div>
 
-      {/* Pass & Play / Online Toggle Button (Top Right) */}
-      {!isOnlineActive && localPhase === 'home' && (
-        <div className="absolute top-3 right-4 z-20">
-          <button
-            onClick={handleStartLocalMode}
-            className="px-3.5 py-1.5 rounded-full bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 backdrop-blur-md text-xs text-amber-200 font-medium transition cursor-pointer flex items-center gap-1.5 shadow-lg"
-          >
-            <span>📱 Same Phone / Pass &amp; Play</span>
-          </button>
-        </div>
-      )}
 
       {/* Online Flow Screens */}
       {playMode === 'online' && (
@@ -217,6 +206,7 @@ export default function Page() {
             <HomeScreen
               onCreateRoom={handleCreateRoom}
               onJoinRoom={handleJoinRoom}
+              onStartPassAndPlay={handleStartLocalMode}
               isLoading={isLoading}
               error={onlineError}
             />

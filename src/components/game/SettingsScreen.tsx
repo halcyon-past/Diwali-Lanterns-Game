@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { GameSettings, Question, QuestionType } from '@/lib/types';
 
 interface SettingsScreenProps {
@@ -31,7 +31,7 @@ export default function SettingsScreen({
     let nextTypes: QuestionType[];
 
     if (currentTypes.includes(type)) {
-      if (currentTypes.length === 1) return; // Must have at least one type
+      if (currentTypes.length === 1) return;
       nextTypes = currentTypes.filter((t) => t !== type);
     } else {
       nextTypes = [...currentTypes, type];
@@ -70,24 +70,24 @@ export default function SettingsScreen({
   return (
     <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-8 text-center">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-lg glass-panel border border-amber-500/25 shadow-2xl backdrop-blur-xl bg-purple-950/75 text-left"
+        initial={{ opacity: 0, scale: 0.94, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="w-full max-w-lg p-7 md:p-9 glow-card text-left relative overflow-hidden"
       >
-        <div className="flex items-center justify-between pb-4 border-b border-purple-500/20">
+        <div className="flex items-center justify-between pb-4 border-b border-purple-500/25">
           <div>
-            <h2 className="text-xl font-bold text-amber-200 glow-text-gold">
+            <h2 className="text-2xl font-bold font-display text-[#FFE082] glow-text-gold">
               Game Settings
             </h2>
-            <p className="text-xs text-purple-300/80">
-              {isHost ? 'Configure trivia rules for your session' : 'Host is configuring the game'}
+            <p className="text-xs text-purple-200/70 mt-0.5">
+              {isHost ? 'Tune questions and rules for your session' : 'Host is configuring the game'}
             </p>
           </div>
           <button
             onClick={onBackToLobby}
-            className="text-xs text-purple-300 hover:text-amber-200 transition"
+            className="text-xs text-purple-300 hover:text-amber-200 transition cursor-pointer"
           >
-            ← Lobby
+            ← Back
           </button>
         </div>
 
@@ -95,11 +95,11 @@ export default function SettingsScreen({
           {/* Question Count Slider */}
           <div>
             <div className="flex justify-between items-center mb-2">
-              <label className="text-sm font-semibold text-amber-100 flex items-center gap-1.5">
+              <label className="text-sm font-bold text-[#FFF9C4] flex items-center gap-1.5">
                 <span>🎯</span>
-                <span>Number of Questions</span>
+                <span>Question Count</span>
               </label>
-              <span className="px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40">
+              <span className="px-3 py-1 text-xs font-black rounded-lg bg-amber-500/25 text-[#FFE082] border border-amber-400/50 shadow-sm">
                 {settings.questionCount} Questions
               </span>
             </div>
@@ -113,46 +113,46 @@ export default function SettingsScreen({
                 onChange={(e) =>
                   onUpdateSettings({ questionCount: parseInt(e.target.value) })
                 }
-                className="w-full accent-amber-500 cursor-pointer"
+                className="w-full accent-amber-400 cursor-pointer h-2 bg-purple-950 rounded-lg"
               />
             ) : (
-              <div className="h-2 bg-purple-900 rounded-full overflow-hidden">
+              <div className="h-2 bg-purple-950 rounded-full overflow-hidden border border-purple-500/30">
                 <div
-                  className="h-full bg-amber-500 rounded-full"
+                  className="h-full bg-gradient-to-r from-amber-400 to-orange-400 rounded-full"
                   style={{ width: `${(settings.questionCount / 50) * 100}%` }}
                 />
               </div>
             )}
-            <div className="flex justify-between text-[11px] text-purple-300/60 mt-1">
+            <div className="flex justify-between text-[11px] text-amber-200/50 mt-1.5">
               <span>Quick (5)</span>
-              <span>Standard (15)</span>
+              <span>Classic (15)</span>
               <span>Marathon (50)</span>
             </div>
           </div>
 
-          {/* Question Types */}
+          {/* Question Formats */}
           <div>
-            <label className="text-sm font-semibold text-amber-100 block mb-2 flex items-center gap-1.5">
+            <label className="text-sm font-bold text-[#FFF9C4] block mb-2 flex items-center gap-1.5">
               <span>🎲</span>
-              <span>Question Formats</span>
+              <span>Question Formats Included</span>
             </label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => handleToggleType('option')}
                 disabled={!isHost}
-                className={`p-3 rounded-xl border text-left transition ${
+                className={`p-4 rounded-xl border text-left transition-all ${
                   settings.questionTypes.includes('option')
-                    ? 'bg-amber-500/20 border-amber-500/60 text-amber-100 shadow-md'
-                    : 'bg-purple-900/20 border-purple-500/20 text-purple-300/60'
-                }`}
+                    ? 'bg-amber-500/20 border-amber-400/80 text-[#FFF9C4] shadow-[0_0_15px_rgba(255,183,77,0.2)]'
+                    : 'bg-purple-950/40 border-purple-500/20 text-purple-300/50'
+                } ${isHost ? 'cursor-pointer hover:border-amber-400' : ''}`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm">Him / Her Choices</span>
-                  <span>{settings.questionTypes.includes('option') ? '✓' : ''}</span>
+                  <span className="font-bold text-sm font-display">Him / Her Choices</span>
+                  <span className="text-amber-400 font-bold">{settings.questionTypes.includes('option') ? '✓' : ''}</span>
                 </div>
                 <p className="text-[11px] mt-1 text-purple-200/70">
-                  Pick between Him or Her for fun debates
+                  Pick between Him or Her for fun couple debates
                 </p>
               </button>
 
@@ -160,67 +160,67 @@ export default function SettingsScreen({
                 type="button"
                 onClick={() => handleToggleType('text')}
                 disabled={!isHost}
-                className={`p-3 rounded-xl border text-left transition ${
+                className={`p-4 rounded-xl border text-left transition-all ${
                   settings.questionTypes.includes('text')
-                    ? 'bg-amber-500/20 border-amber-500/60 text-amber-100 shadow-md'
-                    : 'bg-purple-900/20 border-purple-500/20 text-purple-300/60'
-                }`}
+                    ? 'bg-amber-500/20 border-amber-400/80 text-[#FFF9C4] shadow-[0_0_15px_rgba(255,183,77,0.2)]'
+                    : 'bg-purple-950/40 border-purple-500/20 text-purple-300/50'
+                } ${isHost ? 'cursor-pointer hover:border-amber-400' : ''}`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm">1-Word Answers</span>
-                  <span>{settings.questionTypes.includes('text') ? '✓' : ''}</span>
+                  <span className="font-bold text-sm font-display">1-Word Answers</span>
+                  <span className="text-amber-400 font-bold">{settings.questionTypes.includes('text') ? '✓' : ''}</span>
                 </div>
                 <p className="text-[11px] mt-1 text-purple-200/70">
-                  Type 1 word (fuzzy typo matching included)
+                  Type 1 word (fuzzy typo tolerance included)
                 </p>
               </button>
             </div>
           </div>
 
-          {/* Question Source: Default vs Custom */}
+          {/* Question Bank & Custom Questions */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-semibold text-amber-100 flex items-center gap-1.5">
+              <label className="text-sm font-bold text-[#FFF9C4] flex items-center gap-1.5">
                 <span>📚</span>
                 <span>Question Bank</span>
               </label>
               {isHost && (
                 <button
                   onClick={() => setShowCustomModal(true)}
-                  className="px-2.5 py-1 text-xs rounded-lg bg-purple-500/20 text-purple-200 border border-purple-500/40 hover:bg-purple-500/30 transition flex items-center gap-1"
+                  className="px-3 py-1 text-xs font-semibold rounded-lg bg-amber-500/20 text-[#FFE082] border border-amber-400/40 hover:bg-amber-500/30 transition cursor-pointer flex items-center gap-1"
                 >
                   <span>+ Add Custom</span>
                 </button>
               )}
             </div>
 
-            <div className="p-3 rounded-xl bg-purple-900/30 border border-purple-500/20 space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-purple-200">
+            <div className="p-3.5 rounded-xl bg-purple-950/60 border border-purple-500/25 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-purple-200 font-medium">
                   Default 200 Questions Bank:
                 </span>
-                <span className="text-amber-300 font-semibold">Enabled</span>
+                <span className="text-[#FFE082] font-bold">Enabled</span>
               </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-purple-200">Custom Couple Questions:</span>
-                <span className="text-amber-300 font-semibold">
+              <div className="flex items-center justify-between">
+                <span className="text-purple-200 font-medium">Custom Questions:</span>
+                <span className="text-[#FFE082] font-bold">
                   {settings.customQuestions.length} added
                 </span>
               </div>
             </div>
 
             {settings.customQuestions.length > 0 && (
-              <div className="mt-2 space-y-1.5 max-h-32 overflow-y-auto pr-1">
+              <div className="mt-2.5 space-y-1.5 max-h-32 overflow-y-auto pr-1">
                 {settings.customQuestions.map((q) => (
                   <div
                     key={q.id}
-                    className="flex items-center justify-between text-xs p-2 rounded-lg bg-black/30 border border-amber-500/20 text-amber-100"
+                    className="flex items-center justify-between text-xs p-2.5 rounded-lg bg-black/40 border border-amber-500/25 text-amber-100"
                   >
                     <span className="truncate max-w-[280px]">“{q.text}”</span>
                     {isHost && (
                       <button
                         onClick={() => handleRemoveCustomQuestion(q.id)}
-                        className="text-red-400 hover:text-red-300 ml-2"
+                        className="text-red-400 hover:text-red-300 ml-2 font-bold cursor-pointer"
                       >
                         ✕
                       </button>
@@ -236,119 +236,122 @@ export default function SettingsScreen({
         {isHost ? (
           <button
             onClick={onStartGame}
-            className="w-full btn-gold text-lg py-3.5 flex items-center justify-center gap-2 cursor-pointer transition hover:scale-[1.02] shadow-xl"
+            className="w-full btn-royal-gold py-4 px-6 text-lg flex items-center justify-center gap-2 cursor-pointer mt-2"
           >
             <span>🪔 Start Diwali Trivia</span>
             <span>➔</span>
           </button>
         ) : (
-          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center text-amber-200 text-sm">
-            Host is adjusting settings. Game will start shortly! ✨
+          <div className="p-3.5 rounded-xl bg-amber-500/15 border border-amber-400/30 text-center text-amber-200 text-sm font-medium">
+            Host is finalizing settings. Game will start shortly! ✨
           </div>
         )}
       </motion.div>
 
       {/* Custom Question Modal */}
-      {showCustomModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-md glass-panel border border-amber-500/40 p-6 space-y-4"
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-amber-200 text-lg">
-                Add Custom Couple Question
-              </h3>
-              <button
-                onClick={() => setShowCustomModal(false)}
-                className="text-purple-300 hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleAddCustomQuestion} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-amber-200/90 mb-1">
-                  Question Text
-                </label>
-                <input
-                  type="text"
-                  value={newQuestionText}
-                  onChange={(e) => setNewQuestionText(e.target.value)}
-                  placeholder="e.g. Who takes longer in the shower?"
-                  required
-                  className="input-diwali text-sm"
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-amber-200/90 mb-1">
-                  Answer Type
-                </label>
-                <select
-                  value={newQuestionType}
-                  onChange={(e) =>
-                    setNewQuestionType(e.target.value as QuestionType)
-                  }
-                  className="input-diwali text-sm"
-                >
-                  <option value="option">Multiple Choice (Options)</option>
-                  <option value="text">1-Word Written Answer (Fuzzy Match)</option>
-                </select>
-              </div>
-
-              {newQuestionType === 'option' && (
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-[11px] text-purple-200 mb-1">
-                      Option 1
-                    </label>
-                    <input
-                      type="text"
-                      value={newOption1}
-                      onChange={(e) => setNewOption1(e.target.value)}
-                      placeholder="Him"
-                      className="input-diwali text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] text-purple-200 mb-1">
-                      Option 2
-                    </label>
-                    <input
-                      type="text"
-                      value={newOption2}
-                      onChange={(e) => setNewOption2(e.target.value)}
-                      placeholder="Her"
-                      className="input-diwali text-xs"
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="flex gap-2 pt-2">
+      <AnimatePresence>
+        {showCustomModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-md p-6 md:p-8 glow-card glow-card-gold text-left space-y-4"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold font-display text-[#FFE082] text-xl">
+                  Add Custom Couple Question
+                </h3>
                 <button
-                  type="button"
                   onClick={() => setShowCustomModal(false)}
-                  className="w-1/2 btn-secondary py-2 text-sm"
+                  className="text-purple-300 hover:text-white cursor-pointer text-lg"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={!newQuestionText.trim()}
-                  className="w-1/2 btn-gold py-2 text-sm font-semibold"
-                >
-                  Add Question
+                  ✕
                 </button>
               </div>
-            </form>
-          </motion.div>
-        </div>
-      )}
+
+              <form onSubmit={handleAddCustomQuestion} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-amber-200/90 uppercase tracking-wider mb-1.5">
+                    Question Text
+                  </label>
+                  <input
+                    type="text"
+                    value={newQuestionText}
+                    onChange={(e) => setNewQuestionText(e.target.value)}
+                    placeholder="e.g. Who hogs the blanket at night?"
+                    required
+                    className="input-royal text-sm"
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-amber-200/90 uppercase tracking-wider mb-1.5">
+                    Answer Format
+                  </label>
+                  <select
+                    value={newQuestionType}
+                    onChange={(e) =>
+                      setNewQuestionType(e.target.value as QuestionType)
+                    }
+                    className="input-royal text-sm cursor-pointer"
+                  >
+                    <option value="option">Choice (Him / Her or Custom Options)</option>
+                    <option value="text">1-Word Written Answer (Fuzzy Match)</option>
+                  </select>
+                </div>
+
+                {newQuestionType === 'option' && (
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] text-amber-200/80 mb-1">
+                        Option 1
+                      </label>
+                      <input
+                        type="text"
+                        value={newOption1}
+                        onChange={(e) => setNewOption1(e.target.value)}
+                        placeholder="Him"
+                        className="input-royal text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-amber-200/80 mb-1">
+                        Option 2
+                      </label>
+                      <input
+                        type="text"
+                        value={newOption2}
+                        onChange={(e) => setNewOption2(e.target.value)}
+                        placeholder="Her"
+                        className="input-royal text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomModal(false)}
+                    className="w-1/2 btn-royal-amethyst py-3 text-sm cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!newQuestionText.trim()}
+                    className="w-1/2 btn-royal-gold py-3 text-sm font-bold cursor-pointer"
+                  >
+                    Add Question
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
