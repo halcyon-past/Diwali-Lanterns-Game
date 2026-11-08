@@ -71,6 +71,14 @@ export default function Page() {
     }
   }, [onlineState.matchedQuestions, playMode]);
 
+  // Clear lanterns if room resets or leaves
+  useEffect(() => {
+    if (playMode === 'online' && (!onlineState.roomId || onlineState.phase === 'lobby')) {
+      prevMatchedCountRef.current = 0;
+      skylineRef.current?.clearLanterns();
+    }
+  }, [onlineState.roomId, onlineState.phase, playMode]);
+
   // URL room invite param
   const [invitedRoomCode, setInvitedRoomCode] = useState('');
 
@@ -117,6 +125,7 @@ export default function Page() {
   };
 
   const handleStartLocalGame = () => {
+    skylineRef.current?.clearLanterns();
     const qs = getRandomQuestions(
       localSettings.questionCount,
       localSettings.questionTypes,
@@ -168,6 +177,7 @@ export default function Page() {
   };
 
   const handlePlayAgain = () => {
+    skylineRef.current?.clearLanterns();
     if (playMode === 'online') {
       leaveOnlineRoom();
     }

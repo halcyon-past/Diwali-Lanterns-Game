@@ -8,6 +8,7 @@ import { useParticles } from './useParticles';
 
 export interface SkylineCanvasHandle {
   addLantern: (questionIndex: number) => void;
+  clearLanterns: () => void;
   spawnCelebration: (x: number, y: number) => void;
   getCanvas: () => HTMLCanvasElement | null;
   captureFrame: () => string | null;
@@ -28,7 +29,7 @@ const SkylineCanvas = forwardRef<SkylineCanvasHandle, SkylineCanvasProps>(
     const startTimeRef = useRef<number>(0);
 
     const { initStars, drawStars } = useStars(600);
-    const { addLantern, initAmbientLanterns, updateLanterns, drawLanterns } = useLanterns();
+    const { addLantern, clearLanterns, initAmbientLanterns, updateLanterns, drawLanterns } = useLanterns();
     const { spawnParticles, updateParticles, drawParticles, spawnBurst } = useParticles(160);
 
     const drawSky = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number) => {
@@ -141,6 +142,9 @@ const SkylineCanvas = forwardRef<SkylineCanvasHandle, SkylineCanvasProps>(
         const burstX = canvas.width * 0.3 + Math.random() * canvas.width * 0.4;
         const burstY = canvas.height * 0.35 + Math.random() * canvas.height * 0.25;
         spawnBurst(burstX, burstY, 35);
+      },
+      clearLanterns: () => {
+        clearLanterns();
       },
       spawnCelebration: (x: number, y: number) => {
         spawnBurst(x, y, 40);

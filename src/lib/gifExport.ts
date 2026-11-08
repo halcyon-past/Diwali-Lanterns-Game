@@ -5,21 +5,53 @@
  * Records canvas frames and compiles them into a high-quality downloadable keepsake GIF
  */
 
-// Dynamic import for gif.js (it uses Web Workers)
-let GIFConstructor: typeof import('gif.js').default | null = null;
+// Dynamic loader for gif.js (robust across Next.js Turbopack / SSR)
+async function loadGIF(): Promise<any> {
+  if (typeof window === 'undefined') return null;
 
-async function loadGIF() {
-  if (!GIFConstructor) {
-    const mod = await import('gif.js');
-    GIFConstructor = mod.default;
+  // 1. If window.GIF is already initialized
+  if ((window as any).GIF) {
+    return (window as any).GIF;
   }
-  return GIFConstructor;
+
+  // 2. Load via public/gif.js script tag
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const existing = document.querySelector('script[src="/gif.js"]');
+      if (existing) {
+        if ((window as any).GIF) {
+          resolve();
+          return;
+        }
+        existing.addEventListener('load', () => resolve());
+        existing.addEventListener('error', () => reject(new Error('Failed to load /gif.js')));
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = '/gif.js';
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Failed to load /gif.js'));
+      document.head.appendChild(script);
+    });
+
+    if ((window as any).GIF) {
+      return (window as any).GIF;
+    }
+  } catch {
+    // fallback to dynamic import
+  }
+
+  // 3. Bundler import fallback
+  const mod: any = await import('gif.js');
+  return mod.default || mod;
 }
 
 export interface GifRecorderOptions {
   width: number;
   height: number;
-  quality: number; // 1-30, lower = better quality (3 = crisp high quality)
+  quality: number; // 1-30, lower = better quality (2 = ultra-crisp NeuQuant sampling)
   frameDelay: number; // ms between frames
   totalFrames: number;
   player1Name?: string;
@@ -30,84 +62,132 @@ export interface GifRecorderOptions {
 const DEFAULT_OPTIONS: GifRecorderOptions = {
   width: 800,
   height: 600,
-  quality: 3, // High quality color palette
+  quality: 2, // Maximum color palette precision without noise
   frameDelay: 90,
-  totalFrames: 42,
+  totalFrames: 36, // ~3.3s smooth festive loop
 };
 
 /**
- * Draw celebratory keepsake overlay on the final frames of the GIF
+ * Draw vibrant, high-contrast keepsake overlay that stays visible throughout the GIF
  */
-function drawEndOverlay(
+function drawKeepsakeOverlay(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
   player1Name: string,
   player2Name: string,
-  matchPercentage: number,
-  alpha: number
+  matchPercentage: number
 ) {
   ctx.save();
-  ctx.globalAlpha = Math.min(1, Math.max(0, alpha));
 
-  // Subtle dark vignette to make the festive golden text pop
-  const vignette = ctx.createRadialGradient(
-    width / 2, height / 2, width * 0.15,
-    width / 2, height / 2, width * 0.65
+  // Subtle dark sky contrast boost around center to ensure text always pops
+  const centerGlow = ctx.createRadialGradient(
+    width / 2, height / 2 - 10, width * 0.1,
+    width / 2, height / 2 - 10, width * 0.52
   );
-  vignette.addColorStop(0, 'rgba(10, 1, 24, 0.42)');
-  vignette.addColorStop(1, 'rgba(5, 0, 15, 0.75)');
-  ctx.fillStyle = vignette;
+  centerGlow.addColorStop(0, 'rgba(6, 1, 16, 0.55)');
+  centerGlow.addColorStop(0.7, 'rgba(8, 2, 20, 0.35)');
+  centerGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = centerGlow;
   ctx.fillRect(0, 0, width, height);
 
-  // Center celebratory greeting card
+  // Center Glassmorphic Crest Card
+  const cardW = Math.min(540, width * 0.88);
+  const cardH = 175;
+  const cardX = (width - cardW) / 2;
+  const cardY = (height - cardH) / 2 - 12;
+
+  // Outer gold halo around card
+  ctx.shadowColor = 'rgba(255, 180, 50, 0.75)';
+  ctx.shadowBlur = 24;
+  ctx.fillStyle = 'rgba(14, 3, 28, 0.82)';
+  ctx.strokeStyle = 'rgba(255, 215, 0, 0.85)';
+  ctx.lineWidth = 2;
+
+  ctx.beginPath();
+  ctx.roundRect(cardX, cardY, cardW, cardH, 20);
+  ctx.fill();
+  ctx.stroke();
+
+  // Inner subtle border highlight
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(255, 235, 150, 0.3)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(cardX + 4, cardY + 4, cardW - 8, cardH - 8, 16);
+  ctx.stroke();
+
+  // Corner decorative flourishes
+  ctx.font = '12px sans-serif';
+  ctx.fillStyle = 'rgba(255, 215, 0, 0.75)';
+  ctx.fillText('✦', cardX + 16, cardY + 22);
+  ctx.fillText('✦', cardX + cardW - 24, cardY + 22);
+  ctx.fillText('✦', cardX + 16, cardY + cardH - 12);
+  ctx.fillText('✦', cardX + cardW - 24, cardY + cardH - 12);
+
+  // Content inside Card
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  // Floating Diyas & sparkles above text
-  ctx.font = '28px sans-serif';
-  ctx.fillText('✨  🪔  ✨', width / 2, height / 2 - 68);
+  // Festive Diyas top row
+  ctx.font = '24px sans-serif';
+  ctx.shadowColor = 'rgba(255, 180, 0, 0.9)';
+  ctx.shadowBlur = 12;
+  ctx.fillText('✨  🪔  ✨', width / 2, cardY + 32);
 
-  // Middle line 1: "Happy Diwali to"
-  ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, "Outfit", sans-serif';
-  ctx.fillStyle = '#FFF8E1';
+  // "HAPPY DIWALI TO"
+  ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, "Outfit", sans-serif';
+  ctx.fillStyle = '#FFF9C4';
   ctx.shadowColor = 'rgba(255, 180, 50, 0.85)';
-  ctx.shadowBlur = 14;
-  ctx.fillText('Happy Diwali to', width / 2, height / 2 - 25);
+  ctx.shadowBlur = 10;
+  ctx.fillText('H A P P Y   D I W A L I   T O', width / 2, cardY + 68);
 
-  // Middle line 2: "Name1 & Name2"
-  ctx.font = '900 34px -apple-system, BlinkMacSystemFont, "Outfit", sans-serif';
+  // Couple Names: Large, ultra-vibrant radiant gold
+  const coupleText = `${player1Name} & ${player2Name}`;
+  const fontSize = cardW < 460 ? 28 : 35;
+  ctx.font = `900 ${fontSize}px -apple-system, BlinkMacSystemFont, "Outfit", sans-serif`;
+
+  // First pass: warm luminous bloom
   ctx.fillStyle = '#FFE082';
-  ctx.shadowColor = 'rgba(255, 215, 0, 0.95)';
-  ctx.shadowBlur = 24;
-  const namesText = `${player1Name} & ${player2Name}`;
-  ctx.fillText(namesText, width / 2, height / 2 + 22);
+  ctx.shadowColor = 'rgba(255, 160, 20, 0.98)';
+  ctx.shadowBlur = 20;
+  ctx.fillText(coupleText, width / 2, cardY + 112);
 
-  // Decorative divider
-  ctx.font = '14px sans-serif';
-  ctx.fillStyle = 'rgba(255, 224, 130, 0.7)';
+  // Second pass: sharp golden gradient fill
+  const textGrad = ctx.createLinearGradient(0, cardY + 95, 0, cardY + 130);
+  textGrad.addColorStop(0, '#FFFFFF');
+  textGrad.addColorStop(0.3, '#FFF9C4');
+  textGrad.addColorStop(0.7, '#FFD54F');
+  textGrad.addColorStop(1, '#FFB300');
+  ctx.fillStyle = textGrad;
+  ctx.shadowBlur = 6;
+  ctx.fillText(coupleText, width / 2, cardY + 112);
+
+  // Bottom ornamental accent
+  ctx.font = '13px sans-serif';
+  ctx.fillStyle = 'rgba(255, 215, 0, 0.8)';
   ctx.shadowBlur = 8;
-  ctx.fillText('✦   •   ✦', width / 2, height / 2 + 58);
+  ctx.fillText('✦   •   ✦', width / 2, cardY + 148);
 
-  // Bottom Badge: Match percentage
-  const badgeY = height - 54;
+  // Bottom Floating Badge: Match Percentage
+  const badgeY = height - 42;
   const badgeText = `❤️ ${matchPercentage}% Match  •  Diwali Lanterns 🪔`;
 
-  ctx.font = 'bold 17px -apple-system, BlinkMacSystemFont, "Outfit", sans-serif';
-  const textWidth = ctx.measureText(badgeText).width;
-  const badgeWidth = textWidth + 36;
-  const badgeHeight = 36;
-  const badgeX = (width - badgeWidth) / 2;
+  ctx.font = 'bold 16px -apple-system, BlinkMacSystemFont, "Outfit", sans-serif';
+  const textMetrics = ctx.measureText(badgeText);
+  const badgeW = textMetrics.width + 38;
+  const badgeH = 36;
+  const badgeX = (width - badgeW) / 2;
 
-  // Badge background with gold border
-  ctx.fillStyle = 'rgba(20, 5, 38, 0.82)';
-  ctx.strokeStyle = 'rgba(255, 215, 0, 0.65)';
+  // Badge background & glow
+  ctx.fillStyle = 'rgba(16, 3, 32, 0.88)';
+  ctx.strokeStyle = 'rgba(255, 215, 0, 0.75)';
   ctx.lineWidth = 1.5;
-  ctx.shadowColor = 'rgba(255, 180, 50, 0.6)';
-  ctx.shadowBlur = 15;
+  ctx.shadowColor = 'rgba(255, 180, 50, 0.8)';
+  ctx.shadowBlur = 18;
 
   ctx.beginPath();
-  ctx.roundRect(badgeX, badgeY - badgeHeight / 2, badgeWidth, badgeHeight, 18);
+  ctx.roundRect(badgeX, badgeY - badgeH / 2, badgeW, badgeH, 18);
   ctx.fill();
   ctx.stroke();
 
@@ -132,24 +212,31 @@ export async function exportCanvasAsGif(
   const GIF = await loadGIF();
 
   return new Promise((resolve, reject) => {
+    // Note: dither is set to false to completely avoid noisy pixel speckling on dark night sky gradients
     const gif = new GIF({
       workers: 3,
       quality: opts.quality,
       width: opts.width,
       height: opts.height,
       workerScript: '/gif.worker.js',
-      dither: 'FloydSteinberg',
+      dither: false,
     });
 
-    // Create an offscreen canvas for frame capture at target size
     const offscreen = document.createElement('canvas');
     offscreen.width = opts.width;
     offscreen.height = opts.height;
     const offCtx = offscreen.getContext('2d', { willReadFrequently: true })!;
 
-    const hasEndOverlay = Boolean(opts.player1Name && opts.player2Name);
-    const overlayFramesCount = 15; // final ~1.5s shows the grand celebratory greeting
-    const overlayStartFrame = Math.max(0, opts.totalFrames - overlayFramesCount);
+    const hasKeepsake = Boolean(opts.player1Name && opts.player2Name);
+
+    // Compute aspect-ratio cover transform to prevent stretching/squishing of circular lanterns
+    const srcW = canvas.width;
+    const srcH = canvas.height;
+    const scale = Math.max(opts.width / srcW, opts.height / srcH);
+    const drawW = srcW * scale;
+    const drawH = srcH * scale;
+    const offsetX = (opts.width - drawW) / 2;
+    const offsetY = (opts.height - drawH) / 2;
 
     let frameCount = 0;
     const captureInterval = setInterval(() => {
@@ -168,33 +255,25 @@ export async function exportCanvasAsGif(
         return;
       }
 
-      // Draw current canvas state to offscreen canvas
+      // Draw current canvas state with high quality smoothing and correct aspect ratio
       offCtx.clearRect(0, 0, opts.width, opts.height);
-      offCtx.drawImage(canvas, 0, 0, opts.width, opts.height);
+      offCtx.imageSmoothingEnabled = true;
+      offCtx.imageSmoothingQuality = 'high';
+      offCtx.drawImage(canvas, offsetX, offsetY, drawW, drawH);
 
-      // On final frames, progressively overlay the custom names & match percentage
-      let delay = opts.frameDelay;
-      if (hasEndOverlay && frameCount >= overlayStartFrame) {
-        const overlayStep = frameCount - overlayStartFrame;
-        const alpha = Math.min(1, (overlayStep + 1) / 4); // Fades in smoothly over 4 frames
-
-        drawEndOverlay(
+      // ALWAYS overlay the vibrant keepsake text on EVERY frame of the GIF
+      if (hasKeepsake) {
+        drawKeepsakeOverlay(
           offCtx,
           opts.width,
           opts.height,
           opts.player1Name!,
           opts.player2Name!,
-          opts.matchPercentage ?? 100,
-          alpha
+          opts.matchPercentage ?? 100
         );
-
-        // Pause slightly longer on the final 3 frames so players can admire the keepsake
-        if (frameCount >= opts.totalFrames - 3) {
-          delay = opts.frameDelay * 2.8; // ~250ms hold
-        }
       }
 
-      gif.addFrame(offCtx, { copy: true, delay });
+      gif.addFrame(offCtx, { copy: true, delay: opts.frameDelay });
 
       frameCount++;
       onProgress?.((frameCount / opts.totalFrames) * 0.5); // Progress: 0-50% for capture
@@ -237,17 +316,18 @@ export function downloadCanvasAsPng(
   offscreen.height = canvas.height;
   const offCtx = offscreen.getContext('2d')!;
 
+  offCtx.imageSmoothingEnabled = true;
+  offCtx.imageSmoothingQuality = 'high';
   offCtx.drawImage(canvas, 0, 0);
 
   if (player1Name && player2Name) {
-    drawEndOverlay(
+    drawKeepsakeOverlay(
       offCtx,
       canvas.width,
       canvas.height,
       player1Name,
       player2Name,
-      matchPercentage ?? 100,
-      1
+      matchPercentage ?? 100
     );
   }
 

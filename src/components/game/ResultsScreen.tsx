@@ -53,9 +53,9 @@ export default function ResultsScreen({
         {
           width: 800,
           height: 600,
-          quality: 3,
+          quality: 2,
           frameDelay: 90,
-          totalFrames: 42,
+          totalFrames: 36,
           player1Name,
           player2Name,
           matchPercentage: percentage,

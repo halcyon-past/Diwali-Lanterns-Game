@@ -33,67 +33,77 @@ interface LanternParticle {
 
 export function useLanterns() {
   const lanternsRef = useRef<Lantern[]>([]);
-  const ambientInitialized = useRef(false);
 
   /**
-   * Pre-seed a few gentle floating lanterns in the sky for instant festive atmosphere
+   * Sky starts 100% empty; lanterns only appear when correct answers match
    */
-  const initAmbientLanterns = useCallback((width: number, height: number) => {
-    if (ambientInitialized.current) return;
-    ambientInitialized.current = true;
-
-    const skylineBase = height * 0.72;
-    const initialLanterns: Lantern[] = [];
-
-    for (let i = 0; i < 7; i++) {
-      const targetX = Math.random() * width * 0.85 + width * 0.075;
-      const targetY = Math.random() * skylineBase * 0.65 + skylineBase * 0.08;
-
-      initialLanterns.push({
-        id: -100 - i,
-        x: targetX,
-        y: targetY,
-        targetX,
-        targetY,
-        size: 16 + Math.random() * 10,
-        color: LANTERN_COLORS[i % LANTERN_COLORS.length],
-        opacity: 0.75 + Math.random() * 0.25,
-        phase: 'floating',
-        swayOffset: Math.random() * Math.PI * 2,
-        swaySpeed: 0.6 + Math.random() * 1.0,
-        riseSpeed: 1.0,
-        glowIntensity: 0.75 + Math.random() * 0.25,
-        particles: [],
-        settled: true,
-      });
-    }
-
-    lanternsRef.current = initialLanterns;
+  const initAmbientLanterns = useCallback((_width: number, _height: number) => {
+    lanternsRef.current = [];
   }, []);
 
   /**
-   * Add a new lantern that launches from the bottom and rises up into the night skyline
+   * Add a new lantern that launches from the city and rises into the night skyline,
+   * intelligently distributed across the entire sky to maximize clearance from other lanterns.
    */
   const addLantern = useCallback(
     (canvasWidth: number, canvasHeight: number, questionIndex: number) => {
       const skylineBase = canvasHeight * 0.72;
+      const minX = canvasWidth * 0.08;
+      const maxX = canvasWidth * 0.92;
+      const minY = skylineBase * 0.08;
+      const maxY = skylineBase * 0.78;
 
-      const targetX = Math.random() * canvasWidth * 0.82 + canvasWidth * 0.09;
-      const targetY = Math.random() * skylineBase * 0.6 + skylineBase * 0.05;
+      const existing = lanternsRef.current;
+      let bestX = canvasWidth * 0.5;
+      let bestY = skylineBase * 0.4;
+      let bestDist = -1;
+
+      if (existing.length === 0) {
+        // First lantern: graceful center-upper sky position with slight random jitter
+        bestX = canvasWidth * 0.45 + Math.random() * canvasWidth * 0.1;
+        bestY = skylineBase * 0.32 + Math.random() * skylineBase * 0.15;
+      } else {
+        // Intelligent clearance placement: sample 32 candidates across the sky
+        // and pick the candidate with the greatest distance from any existing lantern
+        const candidateCount = 32;
+        for (let i = 0; i < candidateCount; i++) {
+          const candX = minX + Math.random() * (maxX - minX);
+          const candY = minY + Math.random() * (maxY - minY);
+
+          let minDist = Infinity;
+          for (const l of existing) {
+            const dist = Math.hypot(candX - l.targetX, (candY - l.targetY) * 1.35);
+            if (dist < minDist) {
+              minDist = dist;
+            }
+          }
+
+          if (minDist > bestDist) {
+            bestDist = minDist;
+            bestX = candX;
+            bestY = candY;
+          }
+        }
+      }
+
+      // Depth sizing: lanterns higher up in the distance are smaller (18-22px),
+      // while lanterns closer are larger (28-35px) for atmospheric perspective
+      const depthRatio = Math.max(0, Math.min(1, (bestY - minY) / (maxY - minY)));
+      const baseSize = 18 + depthRatio * 16;
 
       const lantern: Lantern = {
         id: questionIndex,
-        x: canvasWidth * 0.35 + Math.random() * canvasWidth * 0.3,
-        y: canvasHeight + 40,
-        targetX,
-        targetY,
-        size: 22 + Math.random() * 12,
+        x: bestX + (Math.random() - 0.5) * 50,
+        y: canvasHeight + 50,
+        targetX: bestX,
+        targetY: bestY,
+        size: baseSize,
         color: LANTERN_COLORS[questionIndex % LANTERN_COLORS.length],
         opacity: 0,
         phase: 'rising',
         swayOffset: Math.random() * Math.PI * 2,
-        swaySpeed: 0.8 + Math.random() * 1.4,
-        riseSpeed: 1.5 + Math.random() * 0.8,
+        swaySpeed: 0.7 + Math.random() * 0.9,
+        riseSpeed: 1.4 + Math.random() * 0.5,
         glowIntensity: 0.9 + Math.random() * 0.25,
         particles: [],
         settled: false,
@@ -284,11 +294,15 @@ export function useLanterns() {
     []
   );
 
+  const clearLanterns = useCallback(() => {
+    lanternsRef.current = [];
+  }, []);
+
   const getLanternCount = useCallback(() => {
     return lanternsRef.current.filter((l) => l.id >= 0).length;
   }, []);
 
-  return { addLantern, initAmbientLanterns, updateLanterns, drawLanterns, getLanternCount, lanternsRef };
+  return { addLantern, clearLanterns, initAmbientLanterns, updateLanterns, drawLanterns, getLanternCount, lanternsRef };
 }
 
 function adjustColor(hex: string, amount: number): string {
