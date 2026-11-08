@@ -11,6 +11,7 @@ import { useGameRoom } from '@/hooks/useGameRoom';
 import { GameState, GameSettings, DEFAULT_SETTINGS, Question } from '@/lib/types';
 import { getRandomQuestions } from '@/lib/questions';
 import { answersMatch } from '@/lib/fuzzyMatch';
+import { diwaliAudio } from '@/lib/diwaliAudio';
 
 export default function Page() {
   const skylineRef = useRef<SkylineCanvasHandle>(null);
@@ -48,6 +49,12 @@ export default function Page() {
   const [localP2Answer, setLocalP2Answer] = useState('');
   const [localMatchedQuestions, setLocalMatchedQuestions] = useState<number[]>([]);
   const [localLanternCount, setLocalLanternCount] = useState(0);
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+
+  const handleToggleMusic = () => {
+    const playing = diwaliAudio.toggle();
+    setIsMusicPlaying(playing);
+  };
 
   // Auto-launch lantern in canvas when match happens in online mode
   const prevMatchedCountRef = useRef(0);
@@ -57,6 +64,8 @@ export default function Page() {
       if (currentMatched > prevMatchedCountRef.current) {
         const lastIdx = onlineState.matchedQuestions[currentMatched - 1];
         skylineRef.current?.addLantern(lastIdx);
+        diwaliAudio.playCelebrationChime();
+        diwaliAudio.playLanternAscent();
         prevMatchedCountRef.current = currentMatched;
       }
     }
@@ -134,6 +143,8 @@ export default function Page() {
         setLocalMatchedQuestions((prev) => [...prev, localCurrentIndex]);
         setLocalLanternCount((prev) => prev + 1);
         skylineRef.current?.addLantern(localCurrentIndex);
+        diwaliAudio.playCelebrationChime();
+        diwaliAudio.playLanternAscent();
       }
 
       setLocalPhase('reveal');
@@ -189,13 +200,34 @@ export default function Page() {
         />
       </div>
 
-      {/* Top Header Badge */}
-      <div className="absolute top-4 left-6 z-20 flex items-center gap-2">
-        <div className="px-4 py-1.5 rounded-full bg-black/45 border border-amber-400/35 backdrop-blur-md text-xs text-[#FFE082] flex items-center gap-2 shadow-lg">
-          <span className="diya-flame">🪔</span>
-          <span className="font-semibold tracking-widest uppercase font-display text-[11px]">Happy Diwali ✨</span>
+      {/* Top Header Navigation */}
+      <header className="absolute top-4 inset-x-4 md:inset-x-8 z-20 flex items-center justify-between pointer-events-none">
+        <div className="pointer-events-auto flex items-center gap-2">
+          <div className="px-3.5 py-1.5 rounded-full bg-black/55 border border-amber-400/35 backdrop-blur-md text-xs text-[#FFE082] flex items-center gap-2 shadow-lg">
+            <span className="diya-flame">🪔</span>
+            <span className="font-semibold tracking-widest uppercase font-display text-[11px]">Happy Diwali ✨</span>
+          </div>
         </div>
-      </div>
+
+        <div className="pointer-events-auto flex items-center gap-3">
+          <button
+            onClick={handleToggleMusic}
+            aria-label="Toggle festive background music"
+            className={`px-3.5 py-1.5 rounded-full border backdrop-blur-md text-xs flex items-center gap-2 shadow-lg transition active:scale-95 cursor-pointer ${
+              isMusicPlaying
+                ? 'bg-amber-500/20 border-amber-400/60 text-amber-200 shadow-amber-500/20'
+                : 'bg-black/55 hover:bg-black/75 border-amber-400/35 hover:border-amber-400/60 text-[#FFE082]'
+            }`}
+          >
+            <span className={isMusicPlaying ? 'animate-bounce text-sm' : 'text-sm'}>
+              {isMusicPlaying ? '🎶' : '🔇'}
+            </span>
+            <span className="font-medium text-[11px] tracking-wide">
+              {isMusicPlaying ? 'Diwali Music: Playing ✨' : 'Play Diwali Music 🎵'}
+            </span>
+          </button>
+        </div>
+      </header>
 
 
       {/* Online Flow Screens */}
@@ -385,6 +417,32 @@ export default function Page() {
           )}
         </>
       )}
+
+      {/* Footer */}
+      <footer className="absolute bottom-3 inset-x-0 z-20 flex items-center justify-center pointer-events-none">
+        <div className="pointer-events-auto px-4 py-1.5 rounded-full bg-black/50 border border-amber-400/25 backdrop-blur-md text-[11px] text-amber-200/80 font-medium tracking-wide flex items-center gap-1.5 shadow-lg">
+          <span>Crafted with 🪔 by</span>
+          <a
+            href="https://aritro.cloud"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#FFE082] hover:text-white font-semibold underline decoration-amber-400/50 hover:decoration-amber-300 transition"
+          >
+            Aritro Saha
+          </a>
+          <span>•</span>
+          <a
+            href="https://aritro.cloud"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-purple-300 hover:text-amber-200 transition"
+          >
+            aritro.cloud
+          </a>
+          <span>•</span>
+          <span>© {new Date().getFullYear()}</span>
+        </div>
+      </footer>
     </main>
   );
 }

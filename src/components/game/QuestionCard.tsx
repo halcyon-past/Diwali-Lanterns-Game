@@ -42,10 +42,10 @@ export default function QuestionCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.94, y: 20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.94, y: -20 }}
-      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+      initial={{ scale: 0.98 }}
+      animate={{ scale: 1 }}
+      exit={{ scale: 0.98 }}
+      transition={{ duration: 0.3 }}
       className="w-full max-w-xl p-7 md:p-10 glow-card relative overflow-hidden"
     >
       {/* Corner Filigree Sparkles */}

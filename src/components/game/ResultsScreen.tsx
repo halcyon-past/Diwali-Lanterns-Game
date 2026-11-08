@@ -80,11 +80,8 @@ export default function ResultsScreen({
 
   return (
     <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-8 text-center pointer-events-none">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9, y: 30 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-lg p-7 md:p-10 glow-card glow-card-gold pointer-events-auto relative overflow-hidden"
+      <div
+        className="w-full max-w-lg p-7 md:p-10 glow-card glow-card-gold pointer-events-auto relative overflow-hidden shadow-2xl"
       >
         <div className="mb-2">
           <span className="text-5xl md:text-6xl diya-flame inline-block">🪔</span>
@@ -177,7 +174,7 @@ export default function ResultsScreen({
             </button>
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
