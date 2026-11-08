@@ -101,26 +101,11 @@ const SkylineCanvas = forwardRef<SkylineCanvasHandle, SkylineCanvasProps>(
           spawnParticles(width, height, 1);
         }
 
-        if (showLanternCount && totalQuestions > 0) {
-          ctx.save();
-          ctx.fillStyle = 'rgba(255, 220, 100, 0.95)';
-          ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, "Outfit", sans-serif';
-          ctx.textAlign = 'right';
-          ctx.shadowColor = 'rgba(255, 150, 0, 0.9)';
-          ctx.shadowBlur = 10;
-          ctx.fillText(
-            `🪔 ${lanternCount} / ${totalQuestions} Lanterns Ascending`,
-            width - 24,
-            36
-          );
-          ctx.restore();
-        }
-
         animationRef.current = requestAnimationFrame(render);
       },
       [
         drawSky, drawStars, drawLanterns, drawParticles, updateLanterns,
-        updateParticles, spawnParticles, showLanternCount, lanternCount, totalQuestions,
+        updateParticles, spawnParticles,
       ]
     );
 

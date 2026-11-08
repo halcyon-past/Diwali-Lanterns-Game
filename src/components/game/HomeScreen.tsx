@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface HomeScreenProps {
@@ -9,6 +9,7 @@ interface HomeScreenProps {
   onStartPassAndPlay?: () => void;
   isLoading: boolean;
   error: string | null;
+  initialRoomCode?: string;
 }
 
 export default function HomeScreen({
@@ -17,11 +18,21 @@ export default function HomeScreen({
   onStartPassAndPlay,
   isLoading,
   error,
+  initialRoomCode = '',
 }: HomeScreenProps) {
-  const [mode, setMode] = useState<'initial' | 'create' | 'join'>('initial');
+  const [mode, setMode] = useState<'initial' | 'create' | 'join'>(
+    initialRoomCode ? 'join' : 'initial'
+  );
   const [name, setName] = useState('');
-  const [roomCode, setRoomCode] = useState('');
+  const [roomCode, setRoomCode] = useState(initialRoomCode ? initialRoomCode.toUpperCase() : '');
   const [localError, setLocalError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialRoomCode) {
+      setRoomCode(initialRoomCode.toUpperCase());
+      setMode('join');
+    }
+  }, [initialRoomCode]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();

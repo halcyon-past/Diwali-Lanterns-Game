@@ -53,9 +53,12 @@ export default function ResultsScreen({
         {
           width: 800,
           height: 600,
-          quality: 10,
-          frameDelay: 100,
-          totalFrames: 35,
+          quality: 3,
+          frameDelay: 90,
+          totalFrames: 42,
+          player1Name,
+          player2Name,
+          matchPercentage: percentage,
         },
         (progress) => {
           setExportProgress(Math.round(progress * 100));
@@ -66,7 +69,13 @@ export default function ResultsScreen({
       setExportedSuccess(true);
     } catch (err) {
       console.error('GIF export error:', err);
-      downloadCanvasAsPng(canvas, `diwali-skyline-${player1Name}-${player2Name}.png`);
+      downloadCanvasAsPng(
+        canvas,
+        `diwali-skyline-${player1Name}-${player2Name}.png`,
+        player1Name,
+        player2Name,
+        percentage
+      );
     } finally {
       setIsExportingGif(false);
     }
@@ -75,7 +84,13 @@ export default function ResultsScreen({
   const handleDownloadPng = () => {
     const canvas = getCanvas();
     if (!canvas) return;
-    downloadCanvasAsPng(canvas, `diwali-skyline-${player1Name}-${player2Name}.png`);
+    downloadCanvasAsPng(
+      canvas,
+      `diwali-skyline-${player1Name}-${player2Name}.png`,
+      player1Name,
+      player2Name,
+      percentage
+    );
   };
 
   return (

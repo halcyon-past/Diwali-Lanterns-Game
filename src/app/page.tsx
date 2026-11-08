@@ -71,13 +71,16 @@ export default function Page() {
     }
   }, [onlineState.matchedQuestions, playMode]);
 
+  // URL room invite param
+  const [invitedRoomCode, setInvitedRoomCode] = useState('');
+
   // Handle URL pre-fill for ?room=XXXXXX
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const roomParam = params.get('room');
       if (roomParam) {
-        // Will be picked up by join dialog
+        setInvitedRoomCode(roomParam.trim().toUpperCase());
       }
     }
   }, []);
@@ -202,11 +205,26 @@ export default function Page() {
 
       {/* Top Header Navigation */}
       <header className="absolute top-4 inset-x-4 md:inset-x-8 z-20 flex items-center justify-between pointer-events-none">
-        <div className="pointer-events-auto flex items-center gap-2">
+        <div className="pointer-events-auto flex items-center gap-2 md:gap-3">
           <div className="px-3.5 py-1.5 rounded-full bg-black/55 border border-amber-400/35 backdrop-blur-md text-xs text-[#FFE082] flex items-center gap-2 shadow-lg">
             <span className="diya-flame">🪔</span>
             <span className="font-semibold tracking-widest uppercase font-display text-[11px]">Happy Diwali ✨</span>
           </div>
+
+          {/* Lanterns Score Badge - Positioned cleanly on left header, never covered by music button */}
+          {((isOnlineActive && (onlineState.phase === 'playing' || onlineState.phase === 'reveal')) ||
+            (!isOnlineActive && (localPhase === 'p1_answering' || localPhase === 'p2_answering' || localPhase === 'reveal'))) && (
+            <div className="px-3.5 py-1.5 rounded-full bg-amber-950/70 border border-amber-400/50 backdrop-blur-md text-xs flex items-center gap-2 shadow-[0_0_15px_rgba(255,183,77,0.35)] transition-all">
+              <span className="text-sm animate-pulse">🏮</span>
+              <span className="font-bold font-mono text-[#FFE082] text-xs md:text-sm">
+                {isOnlineActive ? onlineState.matchedQuestions.length : localLanternCount} /{' '}
+                {isOnlineActive ? onlineState.totalQuestions : localQuestions.length}
+              </span>
+              <span className="text-[10px] md:text-[11px] text-amber-200/90 font-medium hidden sm:inline">
+                Lanterns Floating
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="pointer-events-auto flex items-center gap-3">
@@ -241,6 +259,7 @@ export default function Page() {
               onStartPassAndPlay={handleStartLocalMode}
               isLoading={isLoading}
               error={onlineError}
+              initialRoomCode={invitedRoomCode}
             />
           )}
 
