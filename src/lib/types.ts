@@ -70,6 +70,7 @@ export const PUSHER_EVENTS = {
   SETTINGS_UPDATED: 'settings-updated',
   QUESTION_SENT: 'question-sent',
   PLAYER_ANSWERED: 'player-answered',
+  ANSWER_SUBMITTED: 'answer-submitted',
   ANSWER_REVEAL: 'answer-reveal',
   NEXT_QUESTION: 'next-question',
   GAME_OVER: 'game-over',

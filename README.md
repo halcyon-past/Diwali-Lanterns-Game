@@ -1,119 +1,60 @@
-# 🪔 Diwali Lanterns — Romantic Couples Trivia Game
+# 🪔 Diwali Lanterns — A Romantic Skyline Trivia for Couples
 
-> **Live Production URL**: [diwali.aritro.cloud](https://diwali.aritro.cloud)  
-> **Crafted with 🪔 by [Aritro Saha](https://aritro.cloud)**
+> **Play Live Now**: 👉 [**diwali.aritro.cloud**](https://diwali.aritro.cloud) 👈  
+> *Crafted with 🪔 by [Aritro Saha](https://aritro.cloud)*
 
-A romantic real-time multiplayer Diwali trivia game crafted specifically for couples. Answer intimate questions about each other (either "Him/Her" debates or 1-word text answers with smart fuzzy typo matching). Whenever your answers match, a warm glowing Diwali paper lantern ascends from the city skyline into your shared starry midnight sky. At the end of the round, couples can download their shared illuminated skyline as an animated GIF or high-resolution PNG memory.
+Welcome to **Diwali Lanterns**, an intimate, festive real-time trivia game created exclusively for couples to celebrate love, laughter, and the festival of lights together.
 
----
-
-## ✨ Features
-
-- **🌐 Real-Time Multiplayer with WebSockets**:
-  - Instant room creation with 6-character room codes.
-  - One-click copyable invite links (`?room=XXXXXX`).
-  - Powered by Pusher Channels (Vercel-native serverless WebSocket architecture).
-- **📱 Pass & Play / Couch Co-Op Mode**:
-  - Sitting next to each other on the couch? Play seamlessly on a single device with phone-passing prompts ("*No peeking!*").
-- **🎆 Living Midnight Skyline & Visual Engine**:
-  - HTML5 Canvas engine rendering deep midnight Diwali skies with cosmic purple nebulae.
-  - 550+ twinkling, multi-spectral stars with authentic four-point diffraction spikes.
-  - Detailed Indian temple and palace skyline with domes, spires, and warm lit windows.
-  - Authentic paper lanterns with realistic vertical ribbing, flickering candle fire cores, ambient halos, upward floating physics, and falling golden spark trails.
-  - Floating golden sparkles, fireflies, and ambient cosmic dust.
-- **🎵 Procedural Diwali Festive Background Music & Sound FX**:
-  - Built-in Web Audio API synthesizer — zero external audio files to download, works instantly and offline.
-  - Authentic Raag Bhupali (Mohanam) joyful pentatonic sitar & flute melody.
-  - Soothing acoustic tanpura drone and rhythmic ghungroo (temple ankle bell) chimes.
-  - Sparkling ascent sound FX whenever a lantern rises into the sky.
-  - Joyous major chord celebration arpeggio on matching answers.
-  - One-click toggle in top header (`Play Diwali Music` / `Diwali Music: Playing ✨`).
-- **💡 200+ Handcrafted Couples Questions Across 5 Categories**:
-  - *Who's More Likely To* (Him / Her debates)
-  - *Favorites* (1-word answers)
-  - *Relationship & Firsts* (Him / Her & text)
-  - *Memories & Quirks* (1-word text)
-  - *Diwali Special* (Festive traditions & sweet moments)
-- **🔍 Smart Fuzzy Matching**:
-  - Uses Fuse.js + Levenshtein distance normalization so couples aren't penalized for minor typos, different capitalization, or extra spaces in 1-word answers.
-- **✏️ Custom Question Creator**:
-  - Hosts can add personalized inside-joke questions directly in the room settings.
-- **🎁 Animated GIF & High-Res PNG Export**:
-  - Capture and export the moving, twinkling night skyline with all the lanterns you lit together using Web Workers (`gif.js`).
+Whether you're sitting cozy next to each other on the couch or celebrating across miles apart, answer intimate questions about your relationship, quirks, and Diwali memories. Whenever your answers match, a warm paper lantern floats from the temple city into your shared midnight sky, gradually illuminating a starry skyline.
 
 ---
 
-## 🚀 Deployment on Vercel (`diwali.aritro.cloud`)
+## 🎮 How to Play
 
-This application is built with Next.js 16 (App Router) and is 100% serverless, perfectly tailored for Vercel deployment.
+### 1. Choose Your Game Mode
+- **🌐 Online Multiplayer**: Create a private room and share the 6-character room code or 1-click link with your partner. Play simultaneously on two phones, tablets, or computers from anywhere in the world!
+- **📱 Couch Co-Op (Pass & Play)**: Sitting together? Play on a single device with confidential answer prompts (*"No peeking!"*).
 
-### 1. Set Up Free Pusher Account
-1. Sign up for a free account at [pusher.com](https://pusher.com) (free sandbox plan gives 200,000 messages/day).
-2. Create a Channels App named `diwali-lanterns`.
-3. Select your preferred cluster (e.g., `ap2` for India / Asia Pacific, or `mt1` for US).
-4. Enable **Client Events** in App Settings (*App Settings* -> toggle *Enable Client Events*).
+### 2. Answer Questions About Each Other
+Each round tests how well you know and agree with each other across two romantic formats:
+- **👨‍❤️‍👩 Him or Her**: Who is more likely to fall asleep during a movie? Who said "I love you" first? Who buys the most Diwali sweets?
+- **💬 1-Word Secret Answers**: Name your partner's comfort food, their dream travel destination, or favorite Diwali sweet. 
+  *(Don't stress over spelling — our fuzzy-matching engine forgives minor typos!)*
 
-### 2. Configure Environment Variables in Vercel
-In your Vercel Project Settings (**Settings** -> **Environment Variables**), add the following private variables:
+### 3. Light Up the Night Skyline
+- With every matching answer, a glowing lantern ignites with flickering candle flame physics and rises into the sky.
+- Each lantern sparkles with falling gold dust, joining hundreds of twinkling stars over an authentic Indian palace and temple skyline.
 
-```env
-PUSHER_APP_ID=2210438
-PUSHER_KEY=f2019c5df4e54eb98dcb
-PUSHER_SECRET=159098389c82d5747a0e
-PUSHER_CLUSTER=ap2
-```
-
-> **Note**: To prevent Vercel's *"Keep This Value Private"* security warning, the application uses standard private environment variables. The client reads the public key and cluster securely via the internal Next.js route `/api/pusher/config`. (Legacy `NEXT_PUBLIC_PUSHER_KEY` is also supported as an automatic fallback).
-
-### 3. Attach Custom Domain (`diwali.aritro.cloud`)
-1. In your Vercel Dashboard, go to **Settings** -> **Domains**.
-2. Enter `diwali.aritro.cloud`.
-3. In your DNS provider (Cloudflare, Namecheap, etc.), add the CNAME record:
-   - **Type**: `CNAME`
-   - **Name**: `diwali`
-   - **Target**: `cname.vercel-dns.com`
-4. Vercel will automatically provision the SSL certificate.
+### 4. Download Your Shared Keepsake
+- At the end of the game, discover your couple compatibility score and festive title.
+- Download your illuminated skyline as an **animated GIF** or a **high-resolution PNG** to share on Instagram or save as a Diwali keepsake!
 
 ---
 
-## 💻 Local Development
+## ✨ Features Built for Couples
 
-```bash
-# Clone the repository
-git clone https://github.com/halcyon-past/Diwali-Lanterns-Game.git
-cd Diwali-Lanterns-Game
-
-# Install dependencies
-npm install
-
-# Copy environment template
-cp .env.example .env.local
-# (Fill in your Pusher credentials in .env.local)
-
-# Run development server
-npm run dev
-
-# Or test optimized production build
-npm run build
-npm run start
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+- **🪔 Living Night Skyline Canvas**:
+  - 550+ twinkling stars with 4-point cross glints.
+  - Indian skyline featuring minarets, grand temple domes, and warm glowing windows.
+  - Realistic paper lanterns with vertical ribbing, candlelight flicker, and floating physics.
+- **🎵 Jolly Festive Diwali Music & Sound FX**:
+  - Procedural sitar and bansuri flute melody in joyful Raag Bhupali.
+  - Soothing acoustic tanpura drone and rhythmic temple ankle bells (*ghungroo*).
+  - Sparkling ascent sound effects and celebratory match chimes.
+  - Toggle audio on or off anytime with the button in the top bar.
+- **📚 200+ Handcrafted Couples Questions**:
+  - Divided into *Who's More Likely To*, *Favorites*, *Relationship & Firsts*, *Memories & Quirks*, and *Diwali Special*.
+- **✏️ Custom Questions**:
+  - Add your own inside jokes and special memories directly in the game settings before starting!
+- **⚡ Zero Apps to Download**:
+  - Works instantly in any modern mobile or desktop web browser.
 
 ---
 
-## 🎨 Tech Stack
+## 🪔 About & Copyright
 
-- **Framework**: [Next.js 16](https://nextjs.org) (React 19, TypeScript, App Router)
-- **Styling & UI**: [Tailwind CSS v4](https://tailwindcss.com) + Framer Motion
-- **Real-Time WebSockets**: [Pusher Channels](https://pusher.com/channels) (Presence & Private Channels)
-- **Visuals & Canvas**: HTML5 2D Canvas Engine (Custom skyline rendering, DPR auto-scaling, lantern physics)
-- **Audio Synthesizer**: Web Audio API (Procedural Raag Bhupali sitar/flute synth, tanpura drone, sound FX)
-- **Fuzzy Matching**: [Fuse.js](https://fusejs.io) + Levenshtein distance
-- **Export Engine**: `gif.js` via dedicated Web Workers + Canvas DataURL PNG export
+Designed and crafted with love for the festival of lights by **[Aritro Saha](https://aritro.cloud)**.
 
----
-
-## 📜 License & Copyright
-
-Crafted with 🪔 by **[Aritro Saha](https://aritro.cloud)** • [aritro.cloud](https://aritro.cloud) • © 2026. All rights reserved.
+- 🌐 **Website**: [aritro.cloud](https://aritro.cloud)
+- 🎮 **Game URL**: [diwali.aritro.cloud](https://diwali.aritro.cloud)
+- © 2026 Aritro Saha. All rights reserved.

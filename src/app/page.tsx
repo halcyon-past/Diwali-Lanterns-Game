@@ -261,7 +261,10 @@ export default function Page() {
               settings={onlineState.settings}
               isHost={onlineIsHost}
               onUpdateSettings={updateOnlineSettings}
-              onStartGame={startOnlineGame}
+              onStartGame={() => {
+                setInLobbySettings(false);
+                startOnlineGame();
+              }}
               onBackToLobby={() => setInLobbySettings(false)}
             />
           )}

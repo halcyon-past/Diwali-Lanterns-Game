@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Player, PlayerAnswer, Question } from '@/lib/types';
 
@@ -34,22 +34,29 @@ export default function AnswerReveal({
     };
   });
 
+  const onNextQuestionRef = useRef(onNextQuestion);
+  useEffect(() => {
+    onNextQuestionRef.current = onNextQuestion;
+  }, [onNextQuestion]);
+
   useEffect(() => {
     const interval = setInterval(() => {
-      setCountdown((prev) => Math.max(0, prev - 1));
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          if (isHost) {
+            onNextQuestionRef.current();
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
-
-    const timer = setTimeout(() => {
-      if (isHost) {
-        onNextQuestion();
-      }
-    }, 6000);
 
     return () => {
       clearInterval(interval);
-      clearTimeout(timer);
     };
-  }, [isHost, onNextQuestion]);
+  }, [isHost]);
 
   return (
     <motion.div

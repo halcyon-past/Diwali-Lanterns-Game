@@ -56,90 +56,206 @@ export function useGameRoom(): UseGameRoomReturn {
 
   const channelRef = useRef<Channel | null>(null);
   const gameStateRef = useRef<GameState>(initialGameState);
-  const isAnswerBoundRef = useRef(false);
+  const answersStoreRef = useRef<Map<number, Map<string, PlayerAnswer>>>(new Map());
+  const revealedQuestionsRef = useRef<Set<number>>(new Set());
+  const isHostRef = useRef(false);
+  const playerIdRef = useRef('');
 
-  // Keep ref in sync with state
+  // Keep refs in sync with state
   useEffect(() => {
     gameStateRef.current = gameState;
   }, [gameState]);
 
-  const bindGameEvents = useCallback((channel: Channel, myId: string) => {
-    channel.bind(PUSHER_EVENTS.SETTINGS_UPDATED, (data: { settings: GameSettings }) => {
-      setGameState((prev) => ({ ...prev, settings: data.settings }));
-    });
+  useEffect(() => {
+    isHostRef.current = isHost;
+  }, [isHost]);
 
-    channel.bind(PUSHER_EVENTS.GAME_STARTED, (data: { questions: Question[]; settings: GameSettings }) => {
-      setGameState((prev) => ({
-        ...prev,
-        phase: 'playing',
-        questions: data.questions,
-        settings: data.settings,
-        currentQuestionIndex: 0,
-        answers: {},
-        matchedQuestions: [],
-        lanterns: [],
-        totalQuestions: data.questions.length,
-      }));
-    });
+  useEffect(() => {
+    playerIdRef.current = playerId;
+  }, [playerId]);
 
-    channel.bind(PUSHER_EVENTS.PLAYER_ANSWERED, (data: { playerId: string; questionIndex: number }) => {
-      if (data.playerId !== myId) {
-        setGameState((prev) => {
-          const existingAnswers = prev.answers[data.questionIndex] || [];
-          const hasExisting = existingAnswers.some((a) => a.playerId === data.playerId);
-          if (hasExisting) return prev;
-
-          return {
-            ...prev,
-            answers: {
-              ...prev.answers,
-              [data.questionIndex]: [
-                ...existingAnswers,
-                { playerId: data.playerId, questionId: data.questionIndex, answer: '***', timestamp: Date.now() },
-              ],
-            },
-          };
-        });
+  const recordAnswerAndCheckReveal = useCallback(
+    (ansPlayerId: string, questionIndex: number, answerText: string) => {
+      if (!answersStoreRef.current.has(questionIndex)) {
+        answersStoreRef.current.set(questionIndex, new Map());
       }
-    });
+      const qMap = answersStoreRef.current.get(questionIndex)!;
+      const answerObj: PlayerAnswer = {
+        playerId: ansPlayerId,
+        questionId: questionIndex,
+        answer: answerText,
+        timestamp: Date.now(),
+      };
+      qMap.set(ansPlayerId, answerObj);
 
-    channel.bind(PUSHER_EVENTS.ANSWER_REVEAL, (data: {
-      questionIndex: number;
-      answers: PlayerAnswer[];
-      matched: boolean;
-      lantern?: LanternPosition;
-    }) => {
+      if (!isHostRef.current) return;
+      if (revealedQuestionsRef.current.has(questionIndex)) return;
+
+      if (qMap.size < 2) {
+        return;
+      }
+
+      revealedQuestionsRef.current.add(questionIndex);
+
+      const state = gameStateRef.current;
+      const question = state.questions[questionIndex];
+      if (!question) return;
+
+      const answersList = Array.from(qMap.values());
+      const p1Answer = answersList[0];
+      const p2Answer = answersList[1];
+
+      const matched = answersMatch(p1Answer.answer, p2Answer.answer, question.type);
+
+      let lantern: LanternPosition | undefined;
+      if (matched) {
+        lantern = {
+          x: Math.random() * 0.8 + 0.1,
+          y: Math.random() * 0.4 + 0.05,
+          size: 18 + Math.random() * 12,
+          color: LANTERN_COLORS[questionIndex % LANTERN_COLORS.length],
+          questionIndex,
+        };
+      }
+
+      // Update Host local state immediately so Host transitions to reveal with zero delay
       setGameState((prev) => ({
         ...prev,
         phase: 'reveal',
         answers: {
           ...prev.answers,
-          [data.questionIndex]: data.answers,
+          [questionIndex]: answersList,
         },
-        matchedQuestions: data.matched
-          ? [...prev.matchedQuestions, data.questionIndex]
+        matchedQuestions: matched
+          ? [...prev.matchedQuestions, questionIndex]
           : prev.matchedQuestions,
-        lanterns: data.lantern
-          ? [...prev.lanterns, data.lantern]
+        lanterns: lantern
+          ? [...prev.lanterns, lantern]
           : prev.lanterns,
       }));
-    });
 
-    channel.bind(PUSHER_EVENTS.NEXT_QUESTION, (data: { questionIndex: number }) => {
-      setGameState((prev) => ({
-        ...prev,
-        phase: 'playing',
-        currentQuestionIndex: data.questionIndex,
-      }));
-    });
+      const chName = channelRef.current?.name || `presence-room-${state.roomId}`;
+      triggerEvent(chName, PUSHER_EVENTS.ANSWER_REVEAL, {
+        questionIndex,
+        answers: answersList,
+        matched,
+        lantern,
+        senderId: playerIdRef.current,
+      });
+    },
+    []
+  );
 
-    channel.bind(PUSHER_EVENTS.GAME_OVER, () => {
-      setGameState((prev) => ({
-        ...prev,
-        phase: 'results',
-      }));
-    });
-  }, []);
+  const bindGameEvents = useCallback(
+    (channel: Channel, myId: string) => {
+      channel.bind(PUSHER_EVENTS.SETTINGS_UPDATED, (data: { settings: GameSettings; senderId?: string }) => {
+        if (data.senderId === myId) return;
+        setGameState((prev) => ({ ...prev, settings: data.settings }));
+      });
+
+      channel.bind(PUSHER_EVENTS.PLAYER_JOINED, (data: { id: string; name: string }) => {
+        setGameState((prev) => {
+          const existing = prev.players.find((p) => p.id === data.id);
+          if (existing) return prev;
+          return {
+            ...prev,
+            players: [
+              ...prev.players,
+              { id: data.id, name: data.name, isHost: false, connected: true },
+            ],
+          };
+        });
+      });
+
+      channel.bind(PUSHER_EVENTS.GAME_STARTED, (data: { questions: Question[]; settings: GameSettings; senderId?: string }) => {
+        if (data.senderId === myId) return;
+        answersStoreRef.current.clear();
+        revealedQuestionsRef.current.clear();
+        setGameState((prev) => ({
+          ...prev,
+          phase: 'playing',
+          questions: data.questions,
+          settings: data.settings,
+          currentQuestionIndex: 0,
+          answers: {},
+          matchedQuestions: [],
+          lanterns: [],
+          totalQuestions: data.questions.length,
+        }));
+      });
+
+      channel.bind(
+        PUSHER_EVENTS.ANSWER_SUBMITTED,
+        (data: { playerId: string; questionIndex: number; answer: string }) => {
+          if (data.playerId !== myId) {
+            setGameState((prev) => {
+              const existingAnswers = prev.answers[data.questionIndex] || [];
+              const hasExisting = existingAnswers.some((a) => a.playerId === data.playerId);
+              if (hasExisting) return prev;
+
+              return {
+                ...prev,
+                answers: {
+                  ...prev.answers,
+                  [data.questionIndex]: [
+                    ...existingAnswers,
+                    { playerId: data.playerId, questionId: data.questionIndex, answer: '***', timestamp: Date.now() },
+                  ],
+                },
+              };
+            });
+
+            recordAnswerAndCheckReveal(data.playerId, data.questionIndex, data.answer);
+          }
+        }
+      );
+
+      channel.bind(
+        PUSHER_EVENTS.ANSWER_REVEAL,
+        (data: {
+          questionIndex: number;
+          answers: PlayerAnswer[];
+          matched: boolean;
+          lantern?: LanternPosition;
+          senderId?: string;
+        }) => {
+          if (data.senderId === myId) return;
+          setGameState((prev) => ({
+            ...prev,
+            phase: 'reveal',
+            answers: {
+              ...prev.answers,
+              [data.questionIndex]: data.answers,
+            },
+            matchedQuestions: data.matched
+              ? [...prev.matchedQuestions, data.questionIndex]
+              : prev.matchedQuestions,
+            lanterns: data.lantern
+              ? [...prev.lanterns, data.lantern]
+              : prev.lanterns,
+          }));
+        }
+      );
+
+      channel.bind(PUSHER_EVENTS.NEXT_QUESTION, (data: { questionIndex: number; senderId?: string }) => {
+        if (data.senderId === myId) return;
+        setGameState((prev) => ({
+          ...prev,
+          phase: 'playing',
+          currentQuestionIndex: data.questionIndex,
+        }));
+      });
+
+      channel.bind(PUSHER_EVENTS.GAME_OVER, (data: { senderId?: string }) => {
+        if (data?.senderId === myId) return;
+        setGameState((prev) => ({
+          ...prev,
+          phase: 'results',
+        }));
+      });
+    },
+    [recordAnswerAndCheckReveal]
+  );
 
   const createRoom = useCallback(async (name: string): Promise<string> => {
     try {
@@ -158,6 +274,8 @@ export function useGameRoom(): UseGameRoomReturn {
       setPlayerId(id);
       setPlayerName(name);
       setIsHost(true);
+      isHostRef.current = true;
+      playerIdRef.current = id;
 
       const pusher = getPusherClient({
         user_data: JSON.stringify({ id, name }),
@@ -216,6 +334,8 @@ export function useGameRoom(): UseGameRoomReturn {
       setPlayerId(id);
       setPlayerName(name);
       setIsHost(false);
+      isHostRef.current = false;
+      playerIdRef.current = id;
 
       const pusher = getPusherClient({
         user_data: JSON.stringify({ id, name }),
@@ -242,6 +362,8 @@ export function useGameRoom(): UseGameRoomReturn {
           roomId: roomCode.toUpperCase(),
           players: playerList,
         }));
+
+        triggerEvent(channelName, PUSHER_EVENTS.PLAYER_JOINED, { id, name });
       });
 
       channel.bind('pusher:member_added', (member: { id: string; info: { name: string } }) => {
@@ -280,17 +402,23 @@ export function useGameRoom(): UseGameRoomReturn {
   }, [bindGameEvents]);
 
   const updateSettings = useCallback((settings: Partial<GameSettings>) => {
-    if (!channelRef.current || !isHost) return;
+    if (!channelRef.current || !isHostRef.current) return;
 
     const newSettings = { ...gameStateRef.current.settings, ...settings };
     setGameState((prev) => ({ ...prev, settings: newSettings }));
 
-    const channelName = `presence-room-${gameStateRef.current.roomId}`;
-    triggerEvent(channelName, PUSHER_EVENTS.SETTINGS_UPDATED, { settings: newSettings });
-  }, [isHost]);
+    const channelName = channelRef.current?.name || `presence-room-${gameStateRef.current.roomId}`;
+    triggerEvent(channelName, PUSHER_EVENTS.SETTINGS_UPDATED, {
+      settings: newSettings,
+      senderId: playerIdRef.current,
+    });
+  }, []);
 
   const startGame = useCallback(() => {
-    if (!channelRef.current || !isHost) return;
+    if (!channelRef.current || !isHostRef.current) return;
+
+    answersStoreRef.current.clear();
+    revealedQuestionsRef.current.clear();
 
     const state = gameStateRef.current;
     const questions = getRandomQuestions(
@@ -299,109 +427,90 @@ export function useGameRoom(): UseGameRoomReturn {
       state.settings.useDefaultQuestions ? [] : state.settings.customQuestions
     );
 
-    const channelName = `presence-room-${state.roomId}`;
+    setGameState((prev) => ({
+      ...prev,
+      phase: 'playing',
+      questions,
+      settings: state.settings,
+      currentQuestionIndex: 0,
+      answers: {},
+      matchedQuestions: [],
+      lanterns: [],
+      totalQuestions: questions.length,
+    }));
+
+    const channelName = channelRef.current?.name || `presence-room-${state.roomId}`;
     triggerEvent(channelName, PUSHER_EVENTS.GAME_STARTED, {
       questions,
       settings: state.settings,
+      senderId: playerIdRef.current,
     });
-  }, [isHost]);
+  }, []);
 
-  const pendingAnswersRef = useRef<Map<number, PlayerAnswer>>(new Map());
+  const submitAnswer = useCallback(
+    (answer: string) => {
+      if (!channelRef.current) return;
 
-  const submitAnswer = useCallback((answer: string) => {
-    if (!channelRef.current) return;
+      const state = gameStateRef.current;
+      const channelName = channelRef.current?.name || `presence-room-${state.roomId}`;
+      const questionIndex = state.currentQuestionIndex;
+      const currentId = playerIdRef.current;
 
-    const state = gameStateRef.current;
-    const channelName = `presence-room-${state.roomId}`;
-    const questionIndex = state.currentQuestionIndex;
-
-    const myAnswer: PlayerAnswer = {
-      playerId,
-      questionId: questionIndex,
-      answer,
-      timestamp: Date.now(),
-    };
-
-    pendingAnswersRef.current.set(questionIndex, myAnswer);
-
-    setGameState((prev) => {
-      const existingAnswers = prev.answers[questionIndex] || [];
-      return {
-        ...prev,
-        answers: {
-          ...prev.answers,
-          [questionIndex]: [...existingAnswers.filter((a) => a.playerId !== playerId), myAnswer],
-        },
+      const myAnswer: PlayerAnswer = {
+        playerId: currentId,
+        questionId: questionIndex,
+        answer,
+        timestamp: Date.now(),
       };
-    });
 
-    triggerEvent(channelName, PUSHER_EVENTS.PLAYER_ANSWERED, {
-      playerId,
-      questionIndex,
-    });
-
-    triggerEvent(channelName, 'client-answer-submitted', {
-      playerId,
-      questionIndex,
-      answer,
-    });
-
-    if (!isAnswerBoundRef.current) {
-      isAnswerBoundRef.current = true;
-      channelRef.current.bind('client-answer-submitted', (data: { playerId: string; questionIndex: number; answer: string }) => {
-        if (data.playerId === playerId) return;
-
-        const currentState = gameStateRef.current;
-        const myStoredAnswer = pendingAnswersRef.current.get(data.questionIndex);
-
-        if (myStoredAnswer && isHost) {
-          const question = currentState.questions[data.questionIndex];
-          const matched = answersMatch(myStoredAnswer.answer, data.answer, question.type);
-
-          const allAnswers = [
-            myStoredAnswer,
-            { playerId: data.playerId, questionId: data.questionIndex, answer: data.answer, timestamp: Date.now() },
-          ];
-
-          let lantern: LanternPosition | undefined;
-          if (matched) {
-            lantern = {
-              x: Math.random() * 0.8 + 0.1,
-              y: Math.random() * 0.4 + 0.05,
-              size: 18 + Math.random() * 12,
-              color: LANTERN_COLORS[data.questionIndex % LANTERN_COLORS.length],
-              questionIndex: data.questionIndex,
-            };
-          }
-
-          const chName = `presence-room-${currentState.roomId}`;
-          triggerEvent(chName, PUSHER_EVENTS.ANSWER_REVEAL, {
-            questionIndex: data.questionIndex,
-            answers: allAnswers,
-            matched,
-            lantern,
-          });
-        }
+      setGameState((prev) => {
+        const existingAnswers = prev.answers[questionIndex] || [];
+        return {
+          ...prev,
+          answers: {
+            ...prev.answers,
+            [questionIndex]: [
+              ...existingAnswers.filter((a) => a.playerId !== currentId),
+              myAnswer,
+            ],
+          },
+        };
       });
-    }
-  }, [playerId, isHost]);
+
+      triggerEvent(channelName, PUSHER_EVENTS.ANSWER_SUBMITTED, {
+        playerId: currentId,
+        questionIndex,
+        answer,
+      });
+
+      recordAnswerAndCheckReveal(currentId, questionIndex, answer);
+    },
+    [recordAnswerAndCheckReveal]
+  );
 
   const nextQuestion = useCallback(() => {
-    if (!channelRef.current || !isHost) return;
+    if (!channelRef.current || !isHostRef.current) return;
 
     const state = gameStateRef.current;
     const nextIdx = state.currentQuestionIndex + 1;
 
     if (nextIdx >= state.questions.length) {
-      const channelName = `presence-room-${state.roomId}`;
-      triggerEvent(channelName, PUSHER_EVENTS.GAME_OVER, {});
+      setGameState((prev) => ({ ...prev, phase: 'results' }));
+      const channelName = channelRef.current?.name || `presence-room-${state.roomId}`;
+      triggerEvent(channelName, PUSHER_EVENTS.GAME_OVER, { senderId: playerIdRef.current });
     } else {
-      const channelName = `presence-room-${state.roomId}`;
+      setGameState((prev) => ({
+        ...prev,
+        phase: 'playing',
+        currentQuestionIndex: nextIdx,
+      }));
+      const channelName = channelRef.current?.name || `presence-room-${state.roomId}`;
       triggerEvent(channelName, PUSHER_EVENTS.NEXT_QUESTION, {
         questionIndex: nextIdx,
+        senderId: playerIdRef.current,
       });
     }
-  }, [isHost]);
+  }, []);
 
   const leaveRoom = useCallback(() => {
     if (channelRef.current) {
@@ -417,7 +526,8 @@ export function useGameRoom(): UseGameRoomReturn {
     setPlayerId('');
     setPlayerName('');
     setError(null);
-    isAnswerBoundRef.current = false;
+    answersStoreRef.current.clear();
+    revealedQuestionsRef.current.clear();
   }, []);
 
   useEffect(() => {
